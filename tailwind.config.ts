@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -57,6 +61,28 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        health: {
+          normal: "hsl(var(--health-normal))",
+          "normal-bg": "hsl(var(--health-normal-bg))",
+          "normal-foreground": "hsl(var(--health-normal-foreground))",
+          risk: "hsl(var(--health-risk))",
+          "risk-bg": "hsl(var(--health-risk-bg))",
+          "risk-foreground": "hsl(var(--health-risk-foreground))",
+          severe: "hsl(var(--health-severe))",
+          "severe-bg": "hsl(var(--health-severe-bg))",
+          "severe-foreground": "hsl(var(--health-severe-foreground))",
+          ai: "hsl(var(--health-ai))",
+          "ai-bg": "hsl(var(--health-ai-bg))",
+          "ai-foreground": "hsl(var(--health-ai-foreground))",
+          advanced: "hsl(var(--health-advanced))",
+          "advanced-bg": "hsl(var(--health-advanced-bg))",
+          "advanced-foreground": "hsl(var(--health-advanced-foreground))",
+        },
+      },
+      boxShadow: {
+        card: "var(--shadow-card)",
+        "card-hover": "var(--shadow-card-hover)",
+        elevated: "var(--shadow-elevated)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,25 +91,22 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "pulse-health": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.6" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-health": "pulse-health 2s ease-in-out infinite",
       },
     },
   },

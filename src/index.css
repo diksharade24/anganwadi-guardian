@@ -2,94 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 30 20% 98%;
+    --foreground: 220 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 25% 12%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 210 90% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 25% 12%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 270 65% 55%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 210 90% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Health status colors */
+    --health-normal: 142 70% 42%;
+    --health-normal-bg: 142 70% 95%;
+    --health-normal-foreground: 142 70% 20%;
+
+    --health-risk: 38 92% 50%;
+    --health-risk-bg: 38 92% 95%;
+    --health-risk-foreground: 38 80% 25%;
+
+    --health-severe: 0 84% 55%;
+    --health-severe-bg: 0 84% 95%;
+    --health-severe-foreground: 0 70% 25%;
+
+    --health-ai: 210 90% 50%;
+    --health-ai-bg: 210 90% 95%;
+    --health-ai-foreground: 210 80% 25%;
+
+    --health-advanced: 270 65% 55%;
+    --health-advanced-bg: 270 65% 95%;
+    --health-advanced-foreground: 270 55% 25%;
+
+    /* Shadows */
+    --shadow-card: 0 1px 3px 0 hsl(220 25% 12% / 0.04), 0 1px 2px -1px hsl(220 25% 12% / 0.04);
+    --shadow-card-hover: 0 4px 12px 0 hsl(220 25% 12% / 0.08), 0 2px 4px -1px hsl(220 25% 12% / 0.04);
+    --shadow-elevated: 0 10px 25px -5px hsl(220 25% 12% / 0.1), 0 4px 10px -6px hsl(220 25% 12% / 0.06);
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
@@ -100,6 +79,41 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .health-badge-normal {
+    @apply bg-health-normal-bg text-health-normal-foreground border border-health-normal/20;
+  }
+  .health-badge-risk {
+    @apply bg-health-risk-bg text-health-risk-foreground border border-health-risk/20;
+  }
+  .health-badge-severe {
+    @apply bg-health-severe-bg text-health-severe-foreground border border-health-severe/20;
+  }
+  .health-badge-ai {
+    @apply bg-health-ai-bg text-health-ai-foreground border border-health-ai/20;
+  }
+  .health-badge-advanced {
+    @apply bg-health-advanced-bg text-health-advanced-foreground border border-health-advanced/20;
+  }
+
+  .stat-card {
+    @apply bg-card rounded-xl p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover;
+  }
+
+  .page-container {
+    @apply max-w-lg mx-auto px-4 pb-24 pt-4;
+  }
+
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3;
   }
 }
