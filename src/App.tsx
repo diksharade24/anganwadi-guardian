@@ -11,6 +11,7 @@ import AIScan from "./pages/AIScan";
 import GeoMap from "./pages/GeoMap";
 import VoiceAssistant from "./pages/VoiceAssistant";
 import MicroLearning from "./pages/MicroLearning";
+import Attendance from "./pages/Attendance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/map" element={<GeoMap />} />
             <Route path="/voice" element={<VoiceAssistant />} />
             <Route path="/learn" element={<MicroLearning />} />
+            <Route path="/attendance" element={<Attendance />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

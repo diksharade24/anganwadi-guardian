@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -13,24 +13,12 @@ import {
   Activity,
   MapPin,
   ClipboardCheck,
-  CheckCheck,
-  Save,
+  BookOpen,
+  Utensils,
+  HeartPulse,
+  X,
 } from "lucide-react";
 import { StatCard, StatusBadge, RiskGauge } from "@/components/HealthWidgets";
-import { toast } from "sonner";
-
-const mockChildren = [
-  { id: "1", name: "Priya Kumari" },
-  { id: "2", name: "Arjun Singh" },
-  { id: "3", name: "Meera Devi" },
-  { id: "4", name: "Rahul Kumar" },
-  { id: "5", name: "Sita Yadav" },
-  { id: "6", name: "Ravi Prasad" },
-  { id: "7", name: "Anita Kumari" },
-  { id: "8", name: "Vikram Das" },
-  { id: "9", name: "Kavita Devi" },
-  { id: "10", name: "Suraj Patel" },
-];
 
 const mockHighRisk = [
   { id: "1", name: "Priya Kumari", age: "2y 4m", score: 78, issue: "Severe underweight", village: "Rampur" },
@@ -46,41 +34,15 @@ const mockReminders = [
   { text: "THR distribution: 28 packets", type: "ai" as const, time: "Tomorrow" },
 ];
 
+const sessionTypes = [
+  { label: "Teaching Session", icon: BookOpen, color: "bg-health-ai/10 text-health-ai" },
+  { label: "Nutrition Distribution", icon: Utensils, color: "bg-health-normal/10 text-health-normal" },
+  { label: "Health Check Session", icon: HeartPulse, color: "bg-health-severe/10 text-health-severe" },
+];
+
 const Dashboard = () => {
   const navigate = useNavigate();
-  const today = new Date().toISOString().split("T")[0];
-
-  const [attendance, setAttendance] = useState<Record<string, "present" | "absent">>(() => {
-    const saved = localStorage.getItem(`attendance-${today}`);
-    if (saved) return JSON.parse(saved);
-    return Object.fromEntries(mockChildren.map((c) => [c.id, "absent" as const]));
-  });
-
-  const presentCount = Object.values(attendance).filter((v) => v === "present").length;
-  const allPresent = presentCount === mockChildren.length;
-
-  const toggleAttendance = (id: string) => {
-    setAttendance((prev) => ({
-      ...prev,
-      [id]: prev[id] === "present" ? "absent" : "present",
-    }));
-  };
-
-  const markAllPresent = () => {
-    setAttendance(Object.fromEntries(mockChildren.map((c) => [c.id, "present" as const])));
-  };
-
-  const saveAttendance = () => {
-    const record = { date: today, attendance };
-    localStorage.setItem(`attendance-${today}`, JSON.stringify(attendance));
-    // Also append to history
-    const history = JSON.parse(localStorage.getItem("attendance-history") || "[]");
-    const existingIdx = history.findIndex((r: any) => r.date === today);
-    if (existingIdx >= 0) history[existingIdx] = record;
-    else history.push(record);
-    localStorage.setItem("attendance-history", JSON.stringify(history));
-    toast.success("Attendance saved successfully!", { description: `${presentCount}/${mockChildren.length} present on ${today}` });
-  };
+  const [showSessionPicker, setShowSessionPicker] = useState(false);
 
   return (
     <div className="page-container">
@@ -101,6 +63,72 @@ const Dashboard = () => {
         <StatCard icon={AlertTriangle} label="At Risk" value={32} trend="22.5%" color="risk" delay={2} />
         <StatCard icon={ShieldAlert} label="Severe" value={12} trend="8.4%" color="severe" delay={3} />
       </div>
+
+      {/* Take Attendance Button */}
+      <motion.button
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => setShowSessionPicker(true)}
+        className="w-full mb-6 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-primary/20 active:scale-[0.97] transition-transform"
+      >
+        <ClipboardCheck className="w-5 h-5" />
+        Take Attendance
+      </motion.button>
+
+      {/* Session Picker Modal */}
+      <AnimatePresence>
+        {showSessionPicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/40 flex items-end justify-center p-4"
+            onClick={() => setShowSessionPicker(false)}
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-background rounded-2xl p-5 pb-8 shadow-xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-bold">Select Session Type</h3>
+                <button
+                  onClick={() => setShowSessionPicker(false)}
+                  className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {sessionTypes.map((s, i) => (
+                  <motion.button
+                    key={s.label}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.06 }}
+                    onClick={() => {
+                      setShowSessionPicker(false);
+                      navigate(`/attendance?session=${encodeURIComponent(s.label)}`);
+                    }}
+                    className="stat-card w-full flex items-center gap-3 active:scale-[0.98] transition-transform text-left"
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.color}`}>
+                      <s.icon className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-semibold">{s.label}</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* AI Insight Banner */}
       <motion.div
@@ -199,86 +227,6 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
-
-      {/* Attendance Marking */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9 }}
-        className="mb-6"
-      >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="section-title mb-0 flex items-center gap-2">
-            <ClipboardCheck className="w-3.5 h-3.5" /> Attendance — Teaching Session
-          </h3>
-          <span className="text-xs font-medium text-muted-foreground">{today}</span>
-        </div>
-
-        <div className="stat-card p-4 mb-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium">Present: {presentCount}/{mockChildren.length}</span>
-            <button
-              onClick={markAllPresent}
-              disabled={allPresent}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-health-normal/10 text-health-normal disabled:opacity-40 active:scale-95 transition-transform"
-            >
-              <CheckCheck className="w-3.5 h-3.5" /> Mark All Present
-            </button>
-          </div>
-          <div className="w-full h-1.5 rounded-full bg-muted mt-2">
-            <motion.div
-              className="h-full rounded-full bg-health-normal"
-              initial={{ width: 0 }}
-              animate={{ width: `${(presentCount / mockChildren.length) * 100}%` }}
-              transition={{ duration: 0.4 }}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5 max-h-[280px] overflow-y-auto">
-          {mockChildren.map((child, i) => {
-            const isPresent = attendance[child.id] === "present";
-            return (
-              <motion.button
-                key={child.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.95 + i * 0.03 }}
-                onClick={() => toggleAttendance(child.id)}
-                className="stat-card w-full flex items-center gap-3 active:scale-[0.98] transition-transform text-left"
-              >
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${
-                    isPresent
-                      ? "bg-health-normal/15 text-health-normal"
-                      : "bg-health-severe/10 text-health-severe"
-                  }`}
-                >
-                  {isPresent ? "P" : "A"}
-                </div>
-                <span className="text-sm font-medium flex-1">{child.name}</span>
-                <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                    isPresent
-                      ? "bg-health-normal/10 text-health-normal"
-                      : "bg-health-severe/10 text-health-severe"
-                  }`}
-                >
-                  {isPresent ? "Present" : "Absent"}
-                </span>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={saveAttendance}
-          className="w-full mt-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
-        >
-          <Save className="w-4 h-4" /> Save Attendance
-        </motion.button>
-      </motion.div>
 
       {/* Quick Actions */}
       <div className="mb-6">
