@@ -10,6 +10,7 @@ import ChildProfile from "./pages/ChildProfile";
 import AIScan from "./pages/AIScan";
 import GeoMap from "./pages/GeoMap";
 import VoiceAssistant from "./pages/VoiceAssistant";
+import MicroLearning from "./pages/MicroLearning";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/scan" element={<AIScan />} />
             <Route path="/map" element={<GeoMap />} />
             <Route path="/voice" element={<VoiceAssistant />} />
+            <Route path="/learn" element={<MicroLearning />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
