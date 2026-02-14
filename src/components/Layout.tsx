@@ -7,6 +7,7 @@ import {
   Camera,
   Map,
   Mic,
+  BookOpen,
   Wifi,
   WifiOff,
 } from "lucide-react";
@@ -14,8 +15,9 @@ import {
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Home" },
   { path: "/children", icon: Users, label: "Children" },
-  { path: "/scan", icon: Camera, label: "AI Scan" },
+  { path: "/scan", icon: Camera, label: "Scan" },
   { path: "/map", icon: Map, label: "Map" },
+  { path: "/learn", icon: BookOpen, label: "Learn" },
   { path: "/voice", icon: Mic, label: "Voice" },
 ];
 
