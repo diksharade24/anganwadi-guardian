@@ -17,6 +17,8 @@ import {
   Utensils,
   HeartPulse,
   X,
+  Package,
+  Syringe,
 } from "lucide-react";
 import { StatCard, StatusBadge, RiskGauge } from "@/components/HealthWidgets";
 
@@ -233,15 +235,19 @@ const Dashboard = () => {
         <h3 className="section-title">Quick Actions</h3>
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Baby, label: "Add Child", color: "bg-health-ai-bg text-health-ai" },
-            { icon: Activity, label: "Record Visit", color: "bg-health-normal-bg text-health-normal" },
-            { icon: Brain, label: "AI Scan", color: "bg-health-advanced-bg text-health-advanced" },
+            { icon: Package, label: "Stock", color: "bg-health-risk-bg text-health-risk", path: "/nutrition" },
+            { icon: Syringe, label: "Vaccines", color: "bg-health-normal-bg text-health-normal", path: "/vaccines" },
+            { icon: Brain, label: "AI Scan", color: "bg-health-advanced-bg text-health-advanced", path: "/scan" },
+            { icon: Baby, label: "Add Child", color: "bg-health-ai-bg text-health-ai", path: "/children" },
+            { icon: Activity, label: "Record Visit", color: "bg-health-normal-bg text-health-normal", path: "/" },
+            { icon: BookOpen, label: "Learn", color: "bg-health-ai-bg text-health-ai", path: "/learn" },
           ].map((action, i) => (
             <motion.button
               key={action.label}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 1 + i * 0.08 }}
+              onClick={() => navigate(action.path)}
               className="stat-card flex flex-col items-center gap-2 py-5 active:scale-95 transition-transform"
             >
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${action.color}`}>
