@@ -13,6 +13,8 @@ import {
   FileText,
 } from "lucide-react";
 import { StatusBadge } from "@/components/HealthWidgets";
+import { exportToPDF } from "@/lib/pdfExport";
+import { Download } from "lucide-react";
 
 interface Vaccine {
   id: string;
@@ -140,6 +142,27 @@ const VaccineTracker = () => {
     });
     return results;
   }, [completedState]);
+
+  const exportCampPDF = () => {
+    const rows = campList.map((entry) => {
+      const vaccines = entry.vaccines.map((v) => {
+        const status = getVaccineStatus(v, entry.child.dob, completedState[entry.child.id] || []);
+        return `<span class="badge ${status === "overdue" ? "badge-red" : "badge-yellow"}">${v.name}</span>`;
+      }).join(" ");
+      return `<tr><td>${entry.child.name}</td><td>${entry.child.village}</td><td>${entry.child.dob}</td><td>${vaccines}</td></tr>`;
+    }).join("");
+
+    exportToPDF("Monthly Vaccination Camp List", `
+      <div class="header">
+        <h1>📋 Monthly Vaccination Camp List</h1>
+        <p>${campList.length} children due for vaccination · ${new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
+      </div>
+      <table>
+        <thead><tr><th>Child Name</th><th>Village</th><th>DOB</th><th>Due Vaccines</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `);
+  };
 
   const child = selectedChild ? mockChildren.find((c) => c.id === selectedChild) : null;
 
@@ -320,12 +343,21 @@ const VaccineTracker = () => {
 
           {tab === "camp" && (
             <div className="space-y-4">
-              <div className="health-badge-ai p-3 rounded-xl border border-health-ai/20">
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="w-4 h-4 text-health-ai" />
-                  <p className="text-xs font-semibold text-health-ai-foreground">Monthly Vaccination Camp List</p>
+              <div className="flex items-center justify-between">
+                <div className="health-badge-ai p-3 rounded-xl border border-health-ai/20 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="w-4 h-4 text-health-ai" />
+                    <p className="text-xs font-semibold text-health-ai-foreground">Monthly Vaccination Camp List</p>
+                  </div>
+                  <p className="text-[10px] text-health-ai-foreground/80">{campList.length} children due for vaccination</p>
                 </div>
-                <p className="text-[10px] text-health-ai-foreground/80">{campList.length} children due for vaccination</p>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={exportCampPDF}
+                  className="ml-3 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-primary/20"
+                >
+                  <Download className="w-3.5 h-3.5" /> PDF
+                </motion.button>
               </div>
               {campList.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">No vaccinations due this month 🎉</p>
