@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { StatusBadge } from "@/components/HealthWidgets";
 import { toast } from "@/components/ui/sonner";
+import { exportToPDF } from "@/lib/pdfExport";
+import { Download } from "lucide-react";
 
 interface StockItem {
   id: string;
@@ -107,6 +109,38 @@ const NutritionStock = () => {
     const shortage = Math.max(0, monthlyReq - s.current);
     return { ...s, monthlyReq, shortage };
   });
+
+  const exportStockPDF = () => {
+    const stockRows = stock.map((item) => {
+      const { status, label } = getStockStatus(item.current, item.minimum, item.maximum);
+      const badgeClass = status === "severe" ? "badge-red" : status === "risk" ? "badge-yellow" : "badge-green";
+      return `<tr><td>${item.name}</td><td>${item.current} ${item.unit}</td><td>${item.minimum} ${item.unit}</td><td><span class="badge ${badgeClass}">${label}</span></td></tr>`;
+    }).join("");
+
+    const predRows = predictions.map((p) => {
+      return `<tr><td>${p.name}</td><td>${p.monthlyReq} ${p.unit}</td><td>${p.current} ${p.unit}</td><td style="color:${p.shortage > 0 ? '#dc2626' : '#16a34a'};font-weight:600">${p.shortage > 0 ? `-${p.shortage} ${p.unit}` : "✓ OK"}</td></tr>`;
+    }).join("");
+
+    const alertsHtml = alerts.map((a) => `<div class="alert">⚠ Low Stock: ${a.name} below ${a.minimum} ${a.unit}</div>`).join("");
+
+    exportToPDF("Nutrition Stock Report", `
+      <div class="header">
+        <h1>📦 Nutrition Stock Report</h1>
+        <p>Anganwadi Ration & Inventory Status · ${new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
+      </div>
+      ${alertsHtml}
+      <p class="section-title">Current Stock Levels</p>
+      <table>
+        <thead><tr><th>Item</th><th>Current Stock</th><th>Minimum Required</th><th>Status</th></tr></thead>
+        <tbody>${stockRows}</tbody>
+      </table>
+      <p class="section-title">Monthly Requirement Prediction (${avgChildrenPresent} avg. children)</p>
+      <table>
+        <thead><tr><th>Item</th><th>Monthly Required</th><th>Available</th><th>Shortage</th></tr></thead>
+        <tbody>${predRows}</tbody>
+      </table>
+    `);
+  };
 
   return (
     <div className="page-container">
@@ -225,13 +259,13 @@ const NutritionStock = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={() => setShowAddModal(true)}
           className="py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
         >
-          <Plus className="w-4 h-4" /> Add Stock
+          <Plus className="w-4 h-4" /> Add
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.97 }}
@@ -239,6 +273,13 @@ const NutritionStock = () => {
           className="py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center gap-2"
         >
           <History className="w-4 h-4" /> History
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={exportStockPDF}
+          className="py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center gap-2"
+        >
+          <Download className="w-4 h-4" /> PDF
         </motion.button>
       </div>
 
