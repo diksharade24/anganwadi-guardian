@@ -11,15 +11,16 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Download,
 } from "lucide-react";
 import { StatusBadge } from "@/components/HealthWidgets";
 import { toast } from "@/components/ui/sonner";
 import { exportToPDF } from "@/lib/pdfExport";
-import { Download } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface StockItem {
   id: string;
-  name: string;
+  nameKey: string;
   unit: string;
   current: number;
   minimum: number;
@@ -35,18 +36,18 @@ interface StockLog {
 }
 
 const defaultStock: StockItem[] = [
-  { id: "rice", name: "Rice", unit: "kg", current: 45, minimum: 10, maximum: 100, perChildPerDay: 0.15 },
-  { id: "dal", name: "Dal", unit: "kg", current: 8, minimum: 5, maximum: 50, perChildPerDay: 0.05 },
-  { id: "oil", name: "Oil", unit: "liters", current: 3, minimum: 2, maximum: 20, perChildPerDay: 0.01 },
-  { id: "eggs", name: "Eggs", unit: "count", current: 120, minimum: 50, maximum: 500, perChildPerDay: 0.5 },
-  { id: "supplement", name: "Supplement Packets", unit: "packets", current: 15, minimum: 20, maximum: 200, perChildPerDay: 0.1 },
+  { id: "rice", nameKey: "rice", unit: "kg", current: 45, minimum: 10, maximum: 100, perChildPerDay: 0.15 },
+  { id: "dal", nameKey: "dal", unit: "kg", current: 8, minimum: 5, maximum: 50, perChildPerDay: 0.05 },
+  { id: "oil", nameKey: "oil", unit: "liters", current: 3, minimum: 2, maximum: 20, perChildPerDay: 0.01 },
+  { id: "eggs", nameKey: "eggs", unit: "count", current: 120, minimum: 50, maximum: 500, perChildPerDay: 0.5 },
+  { id: "supplement", nameKey: "supplementPackets", unit: "packets", current: 15, minimum: 20, maximum: 200, perChildPerDay: 0.1 },
 ];
 
 const getStockStatus = (current: number, minimum: number, maximum: number) => {
   const pct = (current / maximum) * 100;
-  if (current <= minimum) return { status: "severe" as const, label: "Critical", pct };
-  if (current <= minimum * 2) return { status: "risk" as const, label: "Low", pct };
-  return { status: "normal" as const, label: "Sufficient", pct };
+  if (current <= minimum) return { status: "severe" as const, labelKey: "critical" as const, pct };
+  if (current <= minimum * 2) return { status: "risk" as const, labelKey: "lowStock" as const, pct };
+  return { status: "normal" as const, labelKey: "sufficient" as const, pct };
 };
 
 const stockBarColor = (status: "normal" | "risk" | "severe") => {
@@ -57,9 +58,15 @@ const stockBarColor = (status: "normal" | "risk" | "severe") => {
 
 const NutritionStock = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [stock, setStock] = useState<StockItem[]>(() => {
     const saved = localStorage.getItem("nutrition-stock");
-    return saved ? JSON.parse(saved) : defaultStock;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Migrate old data that may not have nameKey
+      return parsed.map((s: any, i: number) => ({ ...defaultStock[i], ...s, nameKey: defaultStock.find(d => d.id === s.id)?.nameKey || s.id }));
+    }
+    return defaultStock;
   });
   const [logs, setLogs] = useState<StockLog[]>(() => {
     const saved = localStorage.getItem("stock-logs");
@@ -71,7 +78,7 @@ const NutritionStock = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [showPrediction, setShowPrediction] = useState(false);
 
-  const avgChildrenPresent = 120; // from attendance data mock
+  const avgChildrenPresent = 120;
   const workingDaysPerMonth = 26;
 
   useEffect(() => {
@@ -86,7 +93,7 @@ const NutritionStock = () => {
 
   const handleAddStock = () => {
     if (!selectedItem || !addQty || Number(addQty) <= 0) {
-      toast.error("Please select item and enter valid quantity");
+      toast.error(t("selectItem"));
       return;
     }
     setStock((prev) =>
@@ -98,7 +105,7 @@ const NutritionStock = () => {
       { date: new Date().toISOString(), item: selectedItem, qty: Number(addQty), type: "added" },
       ...prev,
     ]);
-    toast.success("Stock updated successfully!");
+    toast.success(t("stockUpdated"));
     setShowAddModal(false);
     setSelectedItem("");
     setAddQty("");
@@ -112,31 +119,31 @@ const NutritionStock = () => {
 
   const exportStockPDF = () => {
     const stockRows = stock.map((item) => {
-      const { status, label } = getStockStatus(item.current, item.minimum, item.maximum);
+      const { status, labelKey } = getStockStatus(item.current, item.minimum, item.maximum);
       const badgeClass = status === "severe" ? "badge-red" : status === "risk" ? "badge-yellow" : "badge-green";
-      return `<tr><td>${item.name}</td><td>${item.current} ${item.unit}</td><td>${item.minimum} ${item.unit}</td><td><span class="badge ${badgeClass}">${label}</span></td></tr>`;
+      return `<tr><td>${t(item.nameKey as any)}</td><td>${item.current} ${item.unit}</td><td>${item.minimum} ${item.unit}</td><td><span class="badge ${badgeClass}">${t(labelKey)}</span></td></tr>`;
     }).join("");
 
     const predRows = predictions.map((p) => {
-      return `<tr><td>${p.name}</td><td>${p.monthlyReq} ${p.unit}</td><td>${p.current} ${p.unit}</td><td style="color:${p.shortage > 0 ? '#dc2626' : '#16a34a'};font-weight:600">${p.shortage > 0 ? `-${p.shortage} ${p.unit}` : "✓ OK"}</td></tr>`;
+      return `<tr><td>${t(p.nameKey as any)}</td><td>${p.monthlyReq} ${p.unit}</td><td>${p.current} ${p.unit}</td><td style="color:${p.shortage > 0 ? '#dc2626' : '#16a34a'};font-weight:600">${p.shortage > 0 ? `-${p.shortage} ${p.unit}` : "✓ OK"}</td></tr>`;
     }).join("");
 
-    const alertsHtml = alerts.map((a) => `<div class="alert">⚠ Low Stock: ${a.name} below ${a.minimum} ${a.unit}</div>`).join("");
+    const alertsHtml = alerts.map((a) => `<div class="alert">⚠ ${t("lowStock")}: ${t(a.nameKey as any)} < ${a.minimum} ${a.unit}</div>`).join("");
 
-    exportToPDF("Nutrition Stock Report", `
+    exportToPDF(t("nutritionStock"), `
       <div class="header">
-        <h1>📦 Nutrition Stock Report</h1>
-        <p>Anganwadi Ration & Inventory Status · ${new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
+        <h1>📦 ${t("nutritionStock")}</h1>
+        <p>${t("rationManagement")} · ${new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
       </div>
       ${alertsHtml}
-      <p class="section-title">Current Stock Levels</p>
+      <p class="section-title">${t("currentStock")}</p>
       <table>
-        <thead><tr><th>Item</th><th>Current Stock</th><th>Minimum Required</th><th>Status</th></tr></thead>
+        <thead><tr><th>Item</th><th>${t("available")}</th><th>Min</th><th>Status</th></tr></thead>
         <tbody>${stockRows}</tbody>
       </table>
-      <p class="section-title">Monthly Requirement Prediction (${avgChildrenPresent} avg. children)</p>
+      <p class="section-title">${t("monthlyPrediction")} (${avgChildrenPresent} avg.)</p>
       <table>
-        <thead><tr><th>Item</th><th>Monthly Required</th><th>Available</th><th>Shortage</th></tr></thead>
+        <thead><tr><th>Item</th><th>${t("required")}</th><th>${t("available")}</th><th>${t("shortage")}</th></tr></thead>
         <tbody>${predRows}</tbody>
       </table>
     `);
@@ -150,8 +157,8 @@ const NutritionStock = () => {
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <h2 className="text-lg font-bold">Nutrition Stock</h2>
-          <p className="text-xs text-muted-foreground">Ration & Inventory Management</p>
+          <h2 className="text-lg font-bold">{t("nutritionStock")}</h2>
+          <p className="text-xs text-muted-foreground">{t("rationManagement")}</p>
         </div>
       </div>
 
@@ -162,7 +169,7 @@ const NutritionStock = () => {
             <div key={a.id} className="health-badge-severe p-3 rounded-xl border border-health-severe/20 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-health-severe flex-shrink-0" />
               <p className="text-xs font-semibold text-health-severe-foreground">
-                ⚠ Low Stock: {a.name} below {a.minimum}{a.unit}
+                ⚠ {t("lowStock")}: {t(a.nameKey as any)} &lt; {a.minimum} {a.unit}
               </p>
             </div>
           ))}
@@ -172,10 +179,10 @@ const NutritionStock = () => {
       {/* Stock Dashboard */}
       <div className="mb-6 space-y-3">
         <h3 className="section-title flex items-center gap-2">
-          <Package className="w-3.5 h-3.5" /> Current Stock
+          <Package className="w-3.5 h-3.5" /> {t("currentStock")}
         </h3>
         {stock.map((item, i) => {
-          const { status, label, pct } = getStockStatus(item.current, item.minimum, item.maximum);
+          const { status, labelKey, pct } = getStockStatus(item.current, item.minimum, item.maximum);
           return (
             <motion.div
               key={item.id}
@@ -185,10 +192,10 @@ const NutritionStock = () => {
               className="stat-card"
             >
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold">{item.name}</p>
+                <p className="text-sm font-semibold">{t(item.nameKey as any)}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold">{item.current} {item.unit}</span>
-                  <StatusBadge status={status}>{label}</StatusBadge>
+                  <StatusBadge status={status}>{t(labelKey)}</StatusBadge>
                 </div>
               </div>
               <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden">
@@ -216,8 +223,8 @@ const NutritionStock = () => {
               <TrendingUp className="w-4 h-4 text-health-ai" />
             </div>
             <div className="text-left">
-              <p className="text-sm font-semibold">Monthly Requirement Prediction</p>
-              <p className="text-[10px] text-muted-foreground">Based on {avgChildrenPresent} avg. children</p>
+              <p className="text-sm font-semibold">{t("monthlyPrediction")}</p>
+              <p className="text-[10px] text-muted-foreground">{avgChildrenPresent} avg. {t("children").toLowerCase()}</p>
             </div>
           </div>
           {showPrediction ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
@@ -233,18 +240,18 @@ const NutritionStock = () => {
               <div className="mt-2 space-y-2">
                 {predictions.map((p) => (
                   <div key={p.id} className="stat-card">
-                    <p className="text-sm font-semibold mb-2">{p.name}</p>
+                    <p className="text-sm font-semibold mb-2">{t(p.nameKey as any)}</p>
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
-                        <p className="text-xs text-muted-foreground">Required</p>
+                        <p className="text-xs text-muted-foreground">{t("required")}</p>
                         <p className="text-sm font-bold text-health-ai">{p.monthlyReq} {p.unit}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Available</p>
+                        <p className="text-xs text-muted-foreground">{t("available")}</p>
                         <p className="text-sm font-bold">{p.current} {p.unit}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Shortage</p>
+                        <p className="text-xs text-muted-foreground">{t("shortage")}</p>
                         <p className={`text-sm font-bold ${p.shortage > 0 ? "text-health-severe" : "text-health-normal"}`}>
                           {p.shortage > 0 ? `-${p.shortage}` : "✓"} {p.shortage > 0 ? p.unit : ""}
                         </p>
@@ -265,21 +272,21 @@ const NutritionStock = () => {
           onClick={() => setShowAddModal(true)}
           className="py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
         >
-          <Plus className="w-4 h-4" /> Add
+          <Plus className="w-4 h-4" /> {t("addStock")}
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={() => setShowHistory(!showHistory)}
           className="py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center gap-2"
         >
-          <History className="w-4 h-4" /> History
+          <History className="w-4 h-4" /> {t("history")}
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={exportStockPDF}
           className="py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center gap-2"
         >
-          <Download className="w-4 h-4" /> PDF
+          <Download className="w-4 h-4" /> {t("pdf")}
         </motion.button>
       </div>
 
@@ -292,9 +299,9 @@ const NutritionStock = () => {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden mb-6"
           >
-            <h3 className="section-title">Stock History</h3>
+            <h3 className="section-title">{t("stockHistory")}</h3>
             {logs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No stock history yet</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{t("noStockHistory")}</p>
             ) : (
               <div className="space-y-2">
                 {logs.slice(0, 20).map((log, i) => (
@@ -333,32 +340,32 @@ const NutritionStock = () => {
               className="w-full max-w-md bg-background rounded-2xl p-5 pb-8 shadow-xl"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-bold">Add Stock</h3>
+                <h3 className="text-base font-bold">{t("addStock")}</h3>
                 <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">Select Item</label>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">{t("selectItem")}</label>
                   <select
                     value={selectedItem}
                     onChange={(e) => setSelectedItem(e.target.value)}
                     className="w-full h-10 px-3 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
-                    <option value="">Choose...</option>
+                    <option value="">{t("choose")}</option>
                     {stock.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>
+                      <option key={s.id} value={s.id}>{t(s.nameKey as any)} ({s.unit})</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">Quantity</label>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">{t("quantity")}</label>
                   <input
                     type="number"
                     value={addQty}
                     onChange={(e) => setAddQty(e.target.value)}
-                    placeholder="Enter quantity"
+                    placeholder={t("enterQuantity")}
                     className="w-full h-10 px-3 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
@@ -367,7 +374,7 @@ const NutritionStock = () => {
                   onClick={handleAddStock}
                   className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
                 >
-                  Add Stock
+                  {t("addStock")}
                 </motion.button>
               </div>
             </motion.div>

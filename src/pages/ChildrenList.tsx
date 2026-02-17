@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, Filter, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { StatusBadge, RiskGauge } from "@/components/HealthWidgets";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const allChildren = [
   { id: "1", name: "Priya Kumari", age: "2y 4m", score: 78, status: "severe" as const, village: "Rampur" },
@@ -19,21 +20,29 @@ const ChildrenList = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<"all" | "normal" | "risk" | "severe">("all");
   const [search, setSearch] = useState("");
+  const { t } = useLanguage();
 
   const filtered = allChildren
     .filter((c) => filter === "all" || c.status === filter)
     .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
 
+  const filterLabels = {
+    all: `${t("viewAll").replace(" >", "")} (142)`,
+    severe: `${t("severe")} (12)`,
+    risk: `${t("atRisk")} (32)`,
+    normal: `${t("normal")} (98)`,
+  };
+
   return (
     <div className="page-container">
-      <h2 className="text-xl font-bold mb-4">Children Registry</h2>
+      <h2 className="text-xl font-bold mb-4">{t("childrenRegistry")}</h2>
 
       {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search by name..."
+          placeholder={t("searchByName")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full h-10 pl-9 pr-4 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -42,28 +51,23 @@ const ChildrenList = () => {
 
       {/* Filters */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-        {([
-          { key: "all", label: "All (142)" },
-          { key: "severe", label: "Severe (12)" },
-          { key: "risk", label: "At Risk (32)" },
-          { key: "normal", label: "Normal (98)" },
-        ] as const).map((f) => (
+        {(["all", "severe", "risk", "normal"] as const).map((f) => (
           <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
+            key={f}
+            onClick={() => setFilter(f)}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-              filter === f.key
-                ? f.key === "severe"
+              filter === f
+                ? f === "severe"
                   ? "bg-health-severe text-primary-foreground"
-                  : f.key === "risk"
+                  : f === "risk"
                   ? "bg-health-risk text-primary-foreground"
-                  : f.key === "normal"
+                  : f === "normal"
                   ? "bg-health-normal text-primary-foreground"
                   : "bg-primary text-primary-foreground"
                 : "bg-secondary text-muted-foreground"
             }`}
           >
-            {f.label}
+            {filterLabels[f]}
           </button>
         ))}
       </div>
@@ -85,7 +89,7 @@ const ChildrenList = () => {
               <p className="text-xs text-muted-foreground">{child.age} · {child.village}</p>
             </div>
             <StatusBadge status={child.status}>
-              {child.status === "severe" ? "Severe" : child.status === "risk" ? "At Risk" : "Normal"}
+              {child.status === "severe" ? t("severe") : child.status === "risk" ? t("atRisk") : t("normal")}
             </StatusBadge>
             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </motion.div>

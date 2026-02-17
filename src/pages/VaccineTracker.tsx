@@ -11,15 +11,16 @@ import {
   ChevronRight,
   Users,
   FileText,
+  Download,
 } from "lucide-react";
 import { StatusBadge } from "@/components/HealthWidgets";
 import { exportToPDF } from "@/lib/pdfExport";
-import { Download } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Vaccine {
   id: string;
   name: string;
-  ageWeeks: number; // age in weeks when due
+  ageWeeks: number;
   description: string;
 }
 
@@ -83,6 +84,7 @@ const getVaccineStatus = (vaccine: Vaccine, dob: string, completed: string[]) =>
 
 const VaccineTracker = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [tab, setTab] = useState<"dashboard" | "children" | "camp">("dashboard");
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [completedState, setCompletedState] = useState<Record<string, string[]>>(() => {
@@ -105,7 +107,6 @@ const VaccineTracker = () => {
     });
   };
 
-  // Dashboard stats
   const stats = useMemo(() => {
     let totalVaccines = 0;
     let completedCount = 0;
@@ -129,7 +130,6 @@ const VaccineTracker = () => {
     };
   }, [completedState]);
 
-  // Monthly camp: children due this month
   const campList = useMemo(() => {
     const results: { child: ChildVaccineData; vaccines: Vaccine[] }[] = [];
     mockChildren.forEach((child) => {
@@ -152,10 +152,10 @@ const VaccineTracker = () => {
       return `<tr><td>${entry.child.name}</td><td>${entry.child.village}</td><td>${entry.child.dob}</td><td>${vaccines}</td></tr>`;
     }).join("");
 
-    exportToPDF("Monthly Vaccination Camp List", `
+    exportToPDF(t("monthlyCampList"), `
       <div class="header">
-        <h1>📋 Monthly Vaccination Camp List</h1>
-        <p>${campList.length} children due for vaccination · ${new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
+        <h1>📋 ${t("monthlyCampList")}</h1>
+        <p>${campList.length} ${t("childrenDueVaccination")} · ${new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
       </div>
       <table>
         <thead><tr><th>Child Name</th><th>Village</th><th>DOB</th><th>Due Vaccines</th></tr></thead>
@@ -165,6 +165,13 @@ const VaccineTracker = () => {
   };
 
   const child = selectedChild ? mockChildren.find((c) => c.id === selectedChild) : null;
+
+  const statusLabel = (s: string) => {
+    if (s === "done") return t("done");
+    if (s === "overdue") return t("overdue");
+    if (s === "due-soon") return t("dueSoon");
+    return t("upcoming");
+  };
 
   return (
     <div className="page-container">
@@ -177,12 +184,11 @@ const VaccineTracker = () => {
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <h2 className="text-lg font-bold">{selectedChild && child ? child.name : "Vaccine Tracker"}</h2>
-          <p className="text-xs text-muted-foreground">{selectedChild ? "Immunization Record" : "Smart Immunization Calendar"}</p>
+          <h2 className="text-lg font-bold">{selectedChild && child ? child.name : t("vaccineTracker")}</h2>
+          <p className="text-xs text-muted-foreground">{selectedChild ? t("immunizationRecord") : t("immunizationCalendar")}</p>
         </div>
       </div>
 
-      {/* Child Vaccine Detail */}
       {selectedChild && child ? (
         <div className="space-y-3">
           {immunizationSchedule.map((vaccine, i) => {
@@ -203,35 +209,20 @@ const VaccineTracker = () => {
                   isOverdue ? "border border-health-severe/30" : isDueSoon ? "border border-health-risk/30" : ""
                 }`}
               >
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    isDone
-                      ? "bg-health-normal-bg"
-                      : isOverdue
-                      ? "bg-health-severe-bg"
-                      : isDueSoon
-                      ? "bg-health-risk-bg"
-                      : "bg-secondary"
-                  }`}
-                >
-                  {isDone ? (
-                    <CheckCircle2 className="w-4 h-4 text-health-normal" />
-                  ) : isOverdue ? (
-                    <AlertTriangle className="w-4 h-4 text-health-severe" />
-                  ) : isDueSoon ? (
-                    <Clock className="w-4 h-4 text-health-risk" />
-                  ) : (
-                    <Syringe className="w-4 h-4 text-muted-foreground" />
-                  )}
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  isDone ? "bg-health-normal-bg" : isOverdue ? "bg-health-severe-bg" : isDueSoon ? "bg-health-risk-bg" : "bg-secondary"
+                }`}>
+                  {isDone ? <CheckCircle2 className="w-4 h-4 text-health-normal" /> :
+                   isOverdue ? <AlertTriangle className="w-4 h-4 text-health-severe" /> :
+                   isDueSoon ? <Clock className="w-4 h-4 text-health-risk" /> :
+                   <Syringe className="w-4 h-4 text-muted-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{vaccine.name}</p>
                   <p className="text-[10px] text-muted-foreground">{vaccine.description}</p>
                 </div>
-                <StatusBadge
-                  status={isDone ? "normal" : isOverdue ? "severe" : isDueSoon ? "risk" : "ai"}
-                >
-                  {isDone ? "Done" : isOverdue ? "Overdue" : isDueSoon ? "Due Soon" : "Upcoming"}
+                <StatusBadge status={isDone ? "normal" : isOverdue ? "severe" : isDueSoon ? "risk" : "ai"}>
+                  {statusLabel(status)}
                 </StatusBadge>
               </motion.div>
             );
@@ -242,60 +233,52 @@ const VaccineTracker = () => {
           {/* Tabs */}
           <div className="flex gap-2 mb-4">
             {([
-              { key: "dashboard" as const, label: "Summary" },
-              { key: "children" as const, label: "Children" },
-              { key: "camp" as const, label: "Camp List" },
-            ]).map((t) => (
+              { key: "dashboard" as const, labelKey: "summary" as const },
+              { key: "children" as const, labelKey: "children" as const },
+              { key: "camp" as const, labelKey: "campList" as const },
+            ]).map((tb) => (
               <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
+                key={tb.key}
+                onClick={() => setTab(tb.key)}
                 className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
-                  tab === t.key ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                  tab === tb.key ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
                 }`}
               >
-                {t.label}
+                {t(tb.labelKey)}
               </button>
             ))}
           </div>
 
           {tab === "dashboard" && (
             <div className="space-y-4">
-              {/* Stats */}
               <div className="grid grid-cols-3 gap-3">
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="stat-card text-center">
                   <div className="w-10 h-10 rounded-xl bg-health-normal-bg flex items-center justify-center mx-auto mb-2">
                     <CheckCircle2 className="w-5 h-5 text-health-normal" />
                   </div>
                   <p className="text-xl font-bold text-health-normal">{stats.pct}%</p>
-                  <p className="text-[10px] text-muted-foreground">Vaccinated</p>
+                  <p className="text-[10px] text-muted-foreground">{t("vaccinated")}</p>
                 </motion.div>
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="stat-card text-center">
                   <div className="w-10 h-10 rounded-xl bg-health-severe-bg flex items-center justify-center mx-auto mb-2">
                     <AlertTriangle className="w-5 h-5 text-health-severe" />
                   </div>
                   <p className="text-xl font-bold text-health-severe">{stats.overdue}</p>
-                  <p className="text-[10px] text-muted-foreground">Overdue</p>
+                  <p className="text-[10px] text-muted-foreground">{t("overdue")}</p>
                 </motion.div>
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="stat-card text-center">
                   <div className="w-10 h-10 rounded-xl bg-health-risk-bg flex items-center justify-center mx-auto mb-2">
                     <Clock className="w-5 h-5 text-health-risk" />
                   </div>
                   <p className="text-xl font-bold text-health-risk">{stats.dueSoon}</p>
-                  <p className="text-[10px] text-muted-foreground">Due Soon</p>
+                  <p className="text-[10px] text-muted-foreground">{t("dueSoon")}</p>
                 </motion.div>
               </div>
 
-              {/* Overdue alerts */}
               {campList.filter((c) => c.vaccines.some((v) => getVaccineStatus(v, c.child.dob, completedState[c.child.id] || []) === "overdue")).slice(0, 5).map((entry, i) => (
-                <motion.div
-                  key={entry.child.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.15 + i * 0.05 }}
-                  className="health-badge-severe p-3 rounded-xl border border-health-severe/20"
-                >
+                <motion.div key={entry.child.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 + i * 0.05 }} className="health-badge-severe p-3 rounded-xl border border-health-severe/20">
                   <p className="text-xs font-semibold text-health-severe-foreground">
-                    ⚠ {entry.child.name}: {entry.vaccines.filter((v) => getVaccineStatus(v, entry.child.dob, completedState[entry.child.id] || []) === "overdue").map((v) => v.name).join(", ")} overdue
+                    ⚠ {entry.child.name}: {entry.vaccines.filter((v) => getVaccineStatus(v, entry.child.dob, completedState[entry.child.id] || []) === "overdue").map((v) => v.name).join(", ")} {t("overdue").toLowerCase()}
                   </p>
                 </motion.div>
               ))}
@@ -307,33 +290,22 @@ const VaccineTracker = () => {
               {mockChildren.map((child, i) => {
                 const completed = completedState[child.id] || [];
                 const total = immunizationSchedule.length;
-                const done = completed.length;
-                const overdue = immunizationSchedule.filter(
+                const doneCount = completed.length;
+                const overdueCount = immunizationSchedule.filter(
                   (v) => getVaccineStatus(v, child.dob, completed) === "overdue"
                 ).length;
 
                 return (
-                  <motion.div
-                    key={child.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    onClick={() => setSelectedChild(child.id)}
-                    className="stat-card flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-health-ai-bg flex items-center justify-center text-lg">
-                      💉
-                    </div>
+                  <motion.div key={child.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }} onClick={() => setSelectedChild(child.id)} className="stat-card flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform">
+                    <div className="w-10 h-10 rounded-xl bg-health-ai-bg flex items-center justify-center text-lg">💉</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold">{child.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{child.village} · {done}/{total} doses</p>
+                      <p className="text-[10px] text-muted-foreground">{child.village} · {doneCount}/{total} doses</p>
                       <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden mt-1">
-                        <div className="h-full bg-health-normal rounded-full" style={{ width: `${(done / total) * 100}%` }} />
+                        <div className="h-full bg-health-normal rounded-full" style={{ width: `${(doneCount / total) * 100}%` }} />
                       </div>
                     </div>
-                    {overdue > 0 && (
-                      <StatusBadge status="severe">{overdue} overdue</StatusBadge>
-                    )}
+                    {overdueCount > 0 && <StatusBadge status="severe">{overdueCount} {t("overdue").toLowerCase()}</StatusBadge>}
                     <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   </motion.div>
                 );
@@ -347,29 +319,23 @@ const VaccineTracker = () => {
                 <div className="health-badge-ai p-3 rounded-xl border border-health-ai/20 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <FileText className="w-4 h-4 text-health-ai" />
-                    <p className="text-xs font-semibold text-health-ai-foreground">Monthly Vaccination Camp List</p>
+                    <p className="text-xs font-semibold text-health-ai-foreground">{t("monthlyCampList")}</p>
                   </div>
-                  <p className="text-[10px] text-health-ai-foreground/80">{campList.length} children due for vaccination</p>
+                  <p className="text-[10px] text-health-ai-foreground/80">{campList.length} {t("childrenDueVaccination")}</p>
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={exportCampPDF}
                   className="ml-3 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-primary/20"
                 >
-                  <Download className="w-3.5 h-3.5" /> PDF
+                  <Download className="w-3.5 h-3.5" /> {t("pdf")}
                 </motion.button>
               </div>
               {campList.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No vaccinations due this month 🎉</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t("noVaccinationsDue")}</p>
               ) : (
                 campList.map((entry, i) => (
-                  <motion.div
-                    key={entry.child.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="stat-card"
-                  >
+                  <motion.div key={entry.child.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} className="stat-card">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-semibold">{entry.child.name}</p>
                       <p className="text-[10px] text-muted-foreground">{entry.child.village}</p>

@@ -25,6 +25,7 @@ import {
   AreaChart,
 } from "recharts";
 import DevelopmentTracker from "@/components/DevelopmentTracker";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const growthData = [
   { month: "Jul", weight: 8.2, predicted: 8.2 },
@@ -42,25 +43,40 @@ const visits = [
   { date: "Sep 20, 2025", type: "Home Visit", note: "Child recovering from fever. ORS provided." },
 ];
 
-const nutritionTips = [
-  "Add mashed dal and ghee to rice for extra calories",
-  "Include green leafy vegetables daily for iron",
-  "Provide egg or milk at least 3 times per week",
-  "Continue breastfeeding alongside solid foods",
-];
-
-const tabs = [
-  { key: "health" as const, label: "Health", icon: TrendingUp },
-  { key: "vaccines" as const, label: "Vaccines", icon: Syringe },
-  { key: "development" as const, label: "Development", icon: Baby },
-];
+const nutritionTips: Record<string, string[]> = {
+  en: [
+    "Add mashed dal and ghee to rice for extra calories",
+    "Include green leafy vegetables daily for iron",
+    "Provide egg or milk at least 3 times per week",
+    "Continue breastfeeding alongside solid foods",
+  ],
+  hi: [
+    "अतिरिक्त कैलोरी के लिए चावल में दाल और घी मिलाएं",
+    "आयरन के लिए रोज हरी पत्तेदार सब्जियां खिलाएं",
+    "हफ्ते में कम से कम 3 बार अंडा या दूध दें",
+    "ठोस आहार के साथ स्तनपान जारी रखें",
+  ],
+  mr: [
+    "अतिरिक्त कॅलरीसाठी भातात डाळ आणि तूप मिसळा",
+    "लोहासाठी दररोज हिरव्या पालेभाज्या द्या",
+    "आठवड्यातून किमान 3 वेळा अंडे किंवा दूध द्या",
+    "घन अन्नासोबत स्तनपान चालू ठेवा",
+  ],
+};
 
 const ChildProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState<"health" | "vaccines" | "development">("health");
+  const { lang, t } = useLanguage();
 
-  const childAgeMonths = 28; // Mock: Priya is 2y 4m = 28 months
+  const childAgeMonths = 28;
+
+  const tabs = [
+    { key: "health" as const, labelKey: "health" as const, icon: TrendingUp },
+    { key: "vaccines" as const, labelKey: "vaccines" as const, icon: Syringe },
+    { key: "development" as const, labelKey: "development" as const, icon: Baby },
+  ];
 
   return (
     <div className="page-container">
@@ -85,7 +101,7 @@ const ChildProfile = () => {
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <p className="text-sm font-semibold">Age: 2 years 4 months</p>
-              <StatusBadge status="severe">Severe</StatusBadge>
+              <StatusBadge status="severe">{t("severe")}</StatusBadge>
             </div>
             <p className="text-xs text-muted-foreground mt-1">Mother: Rani Devi · Father: Suresh Kumar</p>
             <p className="text-xs text-muted-foreground">Village: Rampur · Ward: 3</p>
@@ -95,16 +111,16 @@ const ChildProfile = () => {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
-        {tabs.map((t) => (
+        {tabs.map((tab) => (
           <button
-            key={t.key}
-            onClick={() => setActiveTab(t.key)}
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
-              activeTab === t.key ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+              activeTab === tab.key ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
             }`}
           >
-            <t.icon className="w-3.5 h-3.5" />
-            {t.label}
+            <tab.icon className="w-3.5 h-3.5" />
+            {t(tab.labelKey)}
           </button>
         ))}
       </div>
@@ -112,38 +128,36 @@ const ChildProfile = () => {
       {/* Health Tab */}
       {activeTab === "health" && (
         <>
-          {/* AI Risk Score */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="stat-card mb-6">
-            <h3 className="section-title">AI Risk Assessment</h3>
+            <h3 className="section-title">{t("aiRiskAssessment")}</h3>
             <div className="flex items-center gap-6">
               <RiskGauge score={78} size="lg" />
               <div className="flex-1 space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Underweight</span>
-                  <span className="font-semibold text-health-severe">Critical</span>
+                  <span className="text-muted-foreground">{t("underweight")}</span>
+                  <span className="font-semibold text-health-severe">{t("critical")}</span>
                 </div>
                 <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
                   <div className="h-full bg-health-severe rounded-full" style={{ width: "85%" }} />
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Stunting Risk</span>
-                  <span className="font-semibold text-health-risk">Moderate</span>
+                  <span className="text-muted-foreground">{t("stuntingRisk")}</span>
+                  <span className="font-semibold text-health-risk">{t("moderate")}</span>
                 </div>
                 <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
                   <div className="h-full bg-health-risk rounded-full" style={{ width: "55%" }} />
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Dropout Risk</span>
-                  <span className="font-semibold text-health-risk"><AlertTriangle className="w-3 h-3 inline mr-0.5" />Flagged</span>
+                  <span className="text-muted-foreground">{t("dropoutRisk")}</span>
+                  <span className="font-semibold text-health-risk"><AlertTriangle className="w-3 h-3 inline mr-0.5" />{t("flagged")}</span>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Growth Chart */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="stat-card mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="section-title mb-0"><TrendingUp className="w-3.5 h-3.5 inline mr-1" />6-Month Growth Prediction</h3>
+              <h3 className="section-title mb-0"><TrendingUp className="w-3.5 h-3.5 inline mr-1" />{t("growthPrediction")}</h3>
             </div>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
@@ -158,14 +172,13 @@ const ChildProfile = () => {
               </ResponsiveContainer>
             </div>
             <div className="flex items-center justify-center gap-4 mt-2">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><div className="w-3 h-0.5 bg-health-severe rounded" />Actual Weight</div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><div className="w-3 h-0.5 bg-primary rounded border-dashed" />AI Predicted</div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><div className="w-3 h-0.5 bg-health-severe rounded" />{t("actualWeight")}</div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><div className="w-3 h-0.5 bg-primary rounded border-dashed" />{t("aiPredicted")}</div>
             </div>
           </motion.div>
 
-          {/* Anemia Gauge */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="stat-card mb-6">
-            <h3 className="section-title"><Droplets className="w-3.5 h-3.5 inline mr-1" />Hemoglobin Level</h3>
+            <h3 className="section-title"><Droplets className="w-3.5 h-3.5 inline mr-1" />{t("hemoglobinLevel")}</h3>
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <div className="relative h-4 bg-secondary rounded-full overflow-hidden">
@@ -173,7 +186,7 @@ const ChildProfile = () => {
                   <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-card border-2 border-health-risk shadow-md" style={{ left: "45%" }} />
                 </div>
                 <div className="flex justify-between mt-1.5 text-[10px] text-muted-foreground">
-                  <span>Severe (&lt;7)</span><span>Moderate (7-10)</span><span>Normal (&gt;11)</span>
+                  <span>{t("severe")} (&lt;7)</span><span>{t("moderate")} (7-10)</span><span>{t("normal")} (&gt;11)</span>
                 </div>
               </div>
               <div className="text-center">
@@ -183,11 +196,10 @@ const ChildProfile = () => {
             </div>
           </motion.div>
 
-          {/* Nutrition Suggestions */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="stat-card mb-6">
-            <h3 className="section-title"><Apple className="w-3.5 h-3.5 inline mr-1" />AI Nutrition Plan</h3>
+            <h3 className="section-title"><Apple className="w-3.5 h-3.5 inline mr-1" />{t("aiNutritionPlan")}</h3>
             <div className="space-y-2">
-              {nutritionTips.map((tip, i) => (
+              {(nutritionTips[lang] || nutritionTips.en).map((tip, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <div className="w-5 h-5 rounded-md bg-health-normal-bg flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-[10px] font-bold text-health-normal">{i + 1}</span>
@@ -198,9 +210,8 @@ const ChildProfile = () => {
             </div>
           </motion.div>
 
-          {/* Visit History */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mb-6">
-            <h3 className="section-title"><Calendar className="w-3.5 h-3.5 inline mr-1" />Visit History</h3>
+            <h3 className="section-title"><Calendar className="w-3.5 h-3.5 inline mr-1" />{t("visitHistory")}</h3>
             <div className="space-y-2">
               {visits.map((visit, i) => (
                 <div key={i} className="stat-card">
@@ -214,9 +225,8 @@ const ChildProfile = () => {
             </div>
           </motion.div>
 
-          {/* Photo Timeline */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="stat-card mb-6">
-            <h3 className="section-title"><Camera className="w-3.5 h-3.5 inline mr-1" />Photo Timeline</h3>
+            <h3 className="section-title"><Camera className="w-3.5 h-3.5 inline mr-1" />{t("photoTimeline")}</h3>
             <div className="grid grid-cols-4 gap-2">
               {["Jul", "Aug", "Sep", "Oct"].map((month) => (
                 <div key={month} className="aspect-square rounded-xl bg-secondary flex flex-col items-center justify-center gap-1">
@@ -229,7 +239,6 @@ const ChildProfile = () => {
         </>
       )}
 
-      {/* Vaccines Tab */}
       {activeTab === "vaccines" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="stat-card mb-4 flex items-center gap-3">
@@ -237,8 +246,8 @@ const ChildProfile = () => {
               <Syringe className="w-5 h-5 text-health-ai" />
             </div>
             <div>
-              <p className="text-sm font-semibold">Immunization Record</p>
-              <p className="text-[10px] text-muted-foreground">View full record in Vaccine Tracker</p>
+              <p className="text-sm font-semibold">{t("immunizationRecord")}</p>
+              <p className="text-[10px] text-muted-foreground">{t("vaccineTracker")}</p>
             </div>
             <button
               onClick={() => navigate("/vaccines")}
@@ -250,7 +259,6 @@ const ChildProfile = () => {
         </motion.div>
       )}
 
-      {/* Development Tab */}
       {activeTab === "development" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <DevelopmentTracker childId={id || "1"} childAgeMonths={childAgeMonths} />

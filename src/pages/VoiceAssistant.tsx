@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Mic, MicOff, Volume2, Brain, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { StatusBadge } from "@/components/HealthWidgets";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const sampleConversation = [
   { role: "user" as const, text: "Priya ka weight kitna hai?" },
@@ -12,23 +13,11 @@ const sampleConversation = [
 
 const VoiceAssistant = () => {
   const [isListening, setIsListening] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <div className="page-container">
-      <h2 className="text-xl font-bold mb-4">Voice Assistant</h2>
-
-      {/* Language Toggle */}
-      <div className="flex gap-2 mb-6">
-        <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
-          हिंदी
-        </button>
-        <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-secondary text-muted-foreground">
-          English
-        </button>
-        <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-secondary text-muted-foreground">
-          भोजपुरी
-        </button>
-      </div>
+      <h2 className="text-xl font-bold mb-6">{t("voiceAssistant")}</h2>
 
       {/* Conversation */}
       <div className="space-y-3 mb-6">
@@ -71,14 +60,10 @@ const VoiceAssistant = () => {
           {isListening ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
         </motion.button>
         <p className="text-xs text-muted-foreground">
-          {isListening ? "Listening... tap to stop" : "Tap to speak"}
+          {isListening ? t("listeningStop") : t("tapToSpeak")}
         </p>
         {isListening && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex gap-1"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-1">
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={i}
