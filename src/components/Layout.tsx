@@ -10,15 +10,17 @@ import {
   BookOpen,
   Wifi,
   WifiOff,
+  Globe,
 } from "lucide-react";
+import { useLanguage, languageLabels, Language } from "@/contexts/LanguageContext";
 
-const navItems = [
-  { path: "/", icon: LayoutDashboard, label: "Home" },
-  { path: "/children", icon: Users, label: "Children" },
-  { path: "/scan", icon: Camera, label: "Scan" },
-  { path: "/map", icon: Map, label: "Map" },
-  { path: "/learn", icon: BookOpen, label: "Learn" },
-  { path: "/voice", icon: Mic, label: "Voice" },
+const navKeys = [
+  { path: "/", icon: LayoutDashboard, key: "navHome" as const },
+  { path: "/children", icon: Users, key: "navChildren" as const },
+  { path: "/scan", icon: Camera, key: "navScan" as const },
+  { path: "/map", icon: Map, key: "navMap" as const },
+  { path: "/learn", icon: BookOpen, key: "navLearn" as const },
+  { path: "/voice", icon: Mic, key: "navVoice" as const },
 ];
 
 interface LayoutProps {
@@ -28,7 +30,8 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isOnline = true; // Mock online status
+  const isOnline = true;
+  const { lang, setLang, t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,16 +43,32 @@ const Layout = ({ children }: LayoutProps) => {
               <span className="text-primary-foreground font-bold text-sm">A</span>
             </div>
             <div>
-              <h1 className="text-sm font-bold leading-none">AnganTrack</h1>
-              <p className="text-[10px] text-muted-foreground">AI Health Monitor</p>
+              <h1 className="text-sm font-bold leading-none">{t("appName")}</h1>
+              <p className="text-[10px] text-muted-foreground">{t("appSubtitle")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Language Toggle */}
+            <div className="flex items-center bg-secondary rounded-lg p-0.5">
+              {(Object.keys(languageLabels) as Language[]).map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  className={`text-[10px] font-semibold px-2 py-1 rounded-md transition-all ${
+                    lang === l
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {languageLabels[l]}
+                </button>
+              ))}
+            </div>
             <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
               isOnline ? "health-badge-normal" : "health-badge-severe"
             }`}>
               {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-              {isOnline ? "Online" : "Offline"}
+              {isOnline ? t("online") : t("offline")}
             </div>
           </div>
         </div>
@@ -70,7 +89,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border">
         <div className="max-w-lg mx-auto flex items-center justify-around h-16 px-2">
-          {navItems.map((item) => {
+          {navKeys.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
             return (
@@ -92,7 +111,7 @@ const Layout = ({ children }: LayoutProps) => {
                     />
                   )}
                 </div>
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[10px] font-medium">{t(item.key)}</span>
               </button>
             );
           })}

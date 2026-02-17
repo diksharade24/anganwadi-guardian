@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CheckCheck, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const mockChildren = [
   { id: "1", name: "Priya Kumari" },
@@ -23,6 +24,7 @@ const Attendance = () => {
   const session = searchParams.get("session") || "Teaching Session";
   const today = new Date().toISOString().split("T")[0];
   const storageKey = `attendance-${today}-${session}`;
+  const { t } = useLanguage();
 
   const [attendance, setAttendance] = useState<Record<string, "present" | "absent">>(() => {
     const saved = localStorage.getItem(storageKey);
@@ -52,19 +54,15 @@ const Attendance = () => {
     if (existingIdx >= 0) history[existingIdx] = record;
     else history.push(record);
     localStorage.setItem("attendance-history", JSON.stringify(history));
-    toast.success("Attendance saved!", {
-      description: `${session}: ${presentCount}/${mockChildren.length} present on ${today}`,
+    toast.success(t("attendanceSaved"), {
+      description: `${session}: ${presentCount}/${mockChildren.length} ${t("present")} — ${today}`,
     });
   };
 
   return (
     <div className="page-container">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex items-center gap-3 mb-5"
-      >
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-3 mb-5">
         <button
           onClick={() => navigate("/")}
           className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center active:scale-95 transition-transform"
@@ -86,14 +84,14 @@ const Attendance = () => {
       >
         <div className="flex items-center justify-between mb-1">
           <span className="text-sm font-medium">
-            Present: {presentCount}/{mockChildren.length}
+            {t("present")}: {presentCount}/{mockChildren.length}
           </span>
           <button
             onClick={markAllPresent}
             disabled={allPresent}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-health-normal/10 text-health-normal disabled:opacity-40 active:scale-95 transition-transform"
           >
-            <CheckCheck className="w-3.5 h-3.5" /> Mark All Present
+            <CheckCheck className="w-3.5 h-3.5" /> {t("markAllPresent")}
           </button>
         </div>
         <div className="w-full h-1.5 rounded-full bg-muted mt-2">
@@ -136,7 +134,7 @@ const Attendance = () => {
                     : "bg-health-severe/10 text-health-severe"
                 }`}
               >
-                {isPresent ? "Present" : "Absent"}
+                {isPresent ? t("present") : t("absent")}
               </span>
             </motion.button>
           );
@@ -152,7 +150,7 @@ const Attendance = () => {
         onClick={saveAttendance}
         className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
       >
-        <Save className="w-4 h-4" /> Save Attendance
+        <Save className="w-4 h-4" /> {t("saveAttendance")}
       </motion.button>
     </div>
   );
