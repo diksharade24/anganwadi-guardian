@@ -182,6 +182,7 @@ const translations = {
   videoGuides: { en: "Video Guides", hi: "वीडियो गाइड", mr: "व्हिडिओ मार्गदर्शक" },
   markDone: { en: "Mark done", hi: "पूर्ण करें", mr: "पूर्ण करा" },
   choose: { en: "Choose...", hi: "चुनें...", mr: "निवडा..." },
+  supervisor: { en: "Supervisor", hi: "पर्यवेक्षक", mr: "पर्यवेक्षक" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

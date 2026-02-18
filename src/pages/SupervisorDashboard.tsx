@@ -1,0 +1,509 @@
+import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Package,
+  Syringe,
+  Brain,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  ChevronRight,
+  Users,
+  Download,
+  ShieldAlert,
+  TrendingUp,
+  Activity,
+} from "lucide-react";
+import { StatCard, StatusBadge } from "@/components/HealthWidgets";
+import { exportToPDF } from "@/lib/pdfExport";
+import { useLanguage, type TranslationKey } from "@/contexts/LanguageContext";
+
+// ─── Stock data (mirrors NutritionStock) ──────────────────────
+interface StockItem {
+  id: string;
+  nameKey: string;
+  unit: string;
+  current: number;
+  minimum: number;
+  maximum: number;
+  perChildPerDay: number;
+}
+
+const defaultStock: StockItem[] = [
+  { id: "rice", nameKey: "rice", unit: "kg", current: 45, minimum: 10, maximum: 100, perChildPerDay: 0.15 },
+  { id: "dal", nameKey: "dal", unit: "kg", current: 8, minimum: 5, maximum: 50, perChildPerDay: 0.05 },
+  { id: "oil", nameKey: "oil", unit: "liters", current: 3, minimum: 2, maximum: 20, perChildPerDay: 0.01 },
+  { id: "eggs", nameKey: "eggs", unit: "count", current: 120, minimum: 50, maximum: 500, perChildPerDay: 0.5 },
+  { id: "supplement", nameKey: "supplementPackets", unit: "packets", current: 15, minimum: 20, maximum: 200, perChildPerDay: 0.1 },
+];
+
+const getStockStatus = (current: number, minimum: number) => {
+  if (current <= minimum) return "severe" as const;
+  if (current <= minimum * 2) return "risk" as const;
+  return "normal" as const;
+};
+
+// ─── Vaccine data (mirrors VaccineTracker) ────────────────────
+interface Vaccine { id: string; name: string; ageWeeks: number; }
+
+const immunizationSchedule: Vaccine[] = [
+  { id: "bcg", name: "BCG", ageWeeks: 0 },
+  { id: "opv0", name: "OPV-0", ageWeeks: 0 },
+  { id: "hepb0", name: "Hep B", ageWeeks: 0 },
+  { id: "opv1", name: "OPV-1", ageWeeks: 6 },
+  { id: "penta1", name: "Penta-1", ageWeeks: 6 },
+  { id: "rota1", name: "Rota-1", ageWeeks: 6 },
+  { id: "ipv1", name: "IPV-1", ageWeeks: 6 },
+  { id: "pcv1", name: "PCV-1", ageWeeks: 6 },
+  { id: "opv2", name: "OPV-2", ageWeeks: 10 },
+  { id: "penta2", name: "Penta-2", ageWeeks: 10 },
+  { id: "rota2", name: "Rota-2", ageWeeks: 10 },
+  { id: "opv3", name: "OPV-3", ageWeeks: 14 },
+  { id: "penta3", name: "Penta-3", ageWeeks: 14 },
+  { id: "rota3", name: "Rota-3", ageWeeks: 14 },
+  { id: "ipv2", name: "IPV-2", ageWeeks: 14 },
+  { id: "pcv2", name: "PCV-2", ageWeeks: 14 },
+  { id: "measles1", name: "MR-1", ageWeeks: 39 },
+  { id: "jevac1", name: "JE-1", ageWeeks: 39 },
+  { id: "pcv_booster", name: "PCV-B", ageWeeks: 39 },
+  { id: "vitA1", name: "Vit A", ageWeeks: 39 },
+  { id: "dpt_b1", name: "DPT-B1", ageWeeks: 72 },
+  { id: "measles2", name: "MR-2", ageWeeks: 72 },
+  { id: "opv_booster", name: "OPV-B", ageWeeks: 72 },
+  { id: "jevac2", name: "JE-2", ageWeeks: 72 },
+  { id: "dpt_b2", name: "DPT-B2", ageWeeks: 260 },
+];
+
+interface ChildData {
+  id: string;
+  name: string;
+  dob: string;
+  village: string;
+  completedVaccines: string[];
+}
+
+const mockChildren: ChildData[] = [
+  { id: "1", name: "Priya Kumari", dob: "2023-08-15", village: "Rampur", completedVaccines: ["bcg","opv0","hepb0","opv1","penta1","rota1","ipv1","pcv1","opv2","penta2","rota2"] },
+  { id: "2", name: "Arjun Singh", dob: "2024-04-10", village: "Sundarpur", completedVaccines: ["bcg","opv0","hepb0","opv1","penta1","rota1"] },
+  { id: "3", name: "Meera Devi", dob: "2022-11-01", village: "Rampur", completedVaccines: ["bcg","opv0","hepb0","opv1","penta1","rota1","ipv1","pcv1","opv2","penta2","rota2","opv3","penta3","rota3","ipv2","pcv2","measles1","jevac1","pcv_booster","vitA1"] },
+  { id: "4", name: "Rahul Kumar", dob: "2025-01-20", village: "Keshavpur", completedVaccines: ["bcg","opv0","hepb0"] },
+  { id: "5", name: "Anita Sharma", dob: "2021-10-05", village: "Rampur", completedVaccines: ["bcg","opv0","hepb0","opv1","penta1","rota1","ipv1","pcv1","opv2","penta2","rota2","opv3","penta3","rota3","ipv2","pcv2","measles1","jevac1","pcv_booster","vitA1","dpt_b1","measles2","opv_booster","jevac2"] },
+  { id: "6", name: "Vikram Yadav", dob: "2023-03-22", village: "Sundarpur", completedVaccines: ["bcg","opv0","hepb0","opv1","penta1","rota1","ipv1","pcv1","opv2","penta2","rota2","opv3","penta3","rota3","ipv2","pcv2"] },
+  { id: "7", name: "Sita Kumari", dob: "2024-09-12", village: "Keshavpur", completedVaccines: ["bcg","opv0","hepb0"] },
+  { id: "8", name: "Ravi Prasad", dob: "2022-05-30", village: "Rampur", completedVaccines: ["bcg","opv0","hepb0","opv1","penta1","rota1","ipv1","pcv1","opv2","penta2","rota2","opv3","penta3","rota3","ipv2","pcv2","measles1","jevac1","pcv_booster","vitA1","dpt_b1","measles2","opv_booster"] },
+];
+
+// ─── Development delay mock data ──────────────────────────────
+interface DelayChild {
+  id: string;
+  name: string;
+  age: string;
+  village: string;
+  delays: string[];
+}
+
+const childrenWithDelays: DelayChild[] = [
+  { id: "1", name: "Priya Kumari", age: "2y 4m", village: "Rampur", delays: ["speechDev", "cognitiveDev"] },
+  { id: "4", name: "Rahul Kumar", age: "1y 1m", village: "Keshavpur", delays: ["motorDev"] },
+  { id: "7", name: "Sita Kumari", age: "1y 5m", village: "Keshavpur", delays: ["speechDev", "socialDev"] },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────
+const getVaccineStatus = (vaccine: Vaccine, dob: string, completed: string[]) => {
+  if (completed.includes(vaccine.id)) return "done";
+  const dueDate = new Date(new Date(dob).getTime() + vaccine.ageWeeks * 7 * 86400000);
+  const diff = (dueDate.getTime() - Date.now()) / 86400000;
+  if (diff < 0) return "overdue";
+  if (diff <= 30) return "due-soon";
+  return "upcoming";
+};
+
+// ─── Component ────────────────────────────────────────────────
+const SupervisorDashboard = () => {
+  const navigate = useNavigate();
+  const { t, lang } = useLanguage();
+  const [activeSection, setActiveSection] = useState<"overview" | "stock" | "vaccine" | "development">("overview");
+
+  // Stock data from localStorage or defaults
+  const stock: StockItem[] = useMemo(() => {
+    const saved = localStorage.getItem("nutrition-stock");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed.map((s: any, i: number) => ({
+        ...defaultStock[i],
+        ...s,
+        nameKey: defaultStock.find((d) => d.id === s.id)?.nameKey || s.id,
+      }));
+    }
+    return defaultStock;
+  }, []);
+
+  // Vaccine completion state
+  const completedState: Record<string, string[]> = useMemo(() => {
+    const saved = localStorage.getItem("vaccine-completed");
+    if (saved) return JSON.parse(saved);
+    const init: Record<string, string[]> = {};
+    mockChildren.forEach((c) => { init[c.id] = [...c.completedVaccines]; });
+    return init;
+  }, []);
+
+  // Computed stats
+  const stockAlerts = stock.filter((s) => s.current <= s.minimum);
+  const lowStockCount = stock.filter((s) => s.current <= s.minimum * 2).length;
+
+  const vaccineStats = useMemo(() => {
+    let total = 0, completed = 0, overdue = 0, dueSoon = 0;
+    mockChildren.forEach((child) => {
+      const done = completedState[child.id] || [];
+      immunizationSchedule.forEach((v) => {
+        const s = getVaccineStatus(v, child.dob, done);
+        total++;
+        if (s === "done") completed++;
+        if (s === "overdue") overdue++;
+        if (s === "due-soon") dueSoon++;
+      });
+    });
+    return { pct: Math.round((completed / total) * 100), overdue, dueSoon };
+  }, [completedState]);
+
+  const overdueChildren = useMemo(() => {
+    return mockChildren.filter((child) => {
+      const done = completedState[child.id] || [];
+      return immunizationSchedule.some((v) => getVaccineStatus(v, child.dob, done) === "overdue");
+    }).map((child) => {
+      const done = completedState[child.id] || [];
+      const overdueVaccines = immunizationSchedule.filter((v) => getVaccineStatus(v, child.dob, done) === "overdue");
+      return { child, vaccines: overdueVaccines };
+    });
+  }, [completedState]);
+
+  const exportSupervisorPDF = () => {
+    const stockRows = stock.map((s) => {
+      const status = getStockStatus(s.current, s.minimum);
+      const label = status === "severe" ? "Critical" : status === "risk" ? "Low" : "OK";
+      const cls = status === "severe" ? "badge-red" : status === "risk" ? "badge-yellow" : "badge-green";
+      return `<tr><td>${t(s.nameKey as TranslationKey)}</td><td>${s.current} ${s.unit}</td><td><span class="badge ${cls}">${label}</span></td></tr>`;
+    }).join("");
+
+    const vaccineRows = overdueChildren.map((e) =>
+      `<tr><td>${e.child.name}</td><td>${e.child.village}</td><td>${e.vaccines.map((v) => v.name).join(", ")}</td></tr>`
+    ).join("");
+
+    const delayRows = childrenWithDelays.map((c) =>
+      `<tr><td>${c.name}</td><td>${c.age}</td><td>${c.village}</td><td>${c.delays.map((d) => t(d as TranslationKey)).join(", ")}</td></tr>`
+    ).join("");
+
+    exportToPDF("Supervisor Report", `
+      <h2>📦 Stock Status</h2>
+      <table><thead><tr><th>Item</th><th>Current</th><th>Status</th></tr></thead><tbody>${stockRows}</tbody></table>
+      <h2>💉 Vaccine Overdue (${overdueChildren.length} children)</h2>
+      <table><thead><tr><th>Name</th><th>Village</th><th>Overdue Vaccines</th></tr></thead><tbody>${vaccineRows}</tbody></table>
+      <h2>🧠 Development Delays (${childrenWithDelays.length} children)</h2>
+      <table><thead><tr><th>Name</th><th>Age</th><th>Village</th><th>Delay Areas</th></tr></thead><tbody>${delayRows}</tbody></table>
+    `);
+  };
+
+  const sections = [
+    { key: "overview" as const, labelKey: "summary" as TranslationKey },
+    { key: "stock" as const, labelKey: "stock" as TranslationKey },
+    { key: "vaccine" as const, labelKey: "vaccines" as TranslationKey },
+    { key: "development" as const, labelKey: "development" as TranslationKey },
+  ];
+
+  const sectionLabels: Record<string, Record<string, string>> = {
+    supervisorDashboard: { en: "Supervisor Dashboard", hi: "पर्यवेक्षक डैशबोर्ड", mr: "पर्यवेक्षक डॅशबोर्ड" },
+    centerOverview: { en: "Center Overview & Analytics", hi: "केंद्र अवलोकन और विश्लेषण", mr: "केंद्र आढावा आणि विश्लेषण" },
+    stockAlerts: { en: "Stock Alerts", hi: "स्टॉक अलर्ट", mr: "साठा अलर्ट" },
+    vaccineCoverage: { en: "Vaccine Coverage", hi: "वैक्सीन कवरेज", mr: "लस कव्हरेज" },
+    devDelays: { en: "Development Delays", hi: "विकास विलंब", mr: "विकास विलंब" },
+    childrenAtRisk: { en: "Children at Risk", hi: "जोखिम वाले बच्चे", mr: "धोक्यातील मुले" },
+    noAlerts: { en: "All stock levels sufficient ✓", hi: "सभी स्टॉक स्तर पर्याप्त ✓", mr: "सर्व साठा पातळी पुरेशी ✓" },
+    overdueVaccines: { en: "Overdue Vaccines", hi: "विलंबित टीके", mr: "मुदत उलटलेल्या लसी" },
+    noOverdue: { en: "No overdue vaccinations ✓", hi: "कोई विलंबित टीकाकरण नहीं ✓", mr: "मुदत उलटलेले लसीकरण नाही ✓" },
+    delayAreas: { en: "Delay Areas", hi: "विलंब क्षेत्र", mr: "विलंब क्षेत्रे" },
+    noDelays: { en: "No development delays detected ✓", hi: "कोई विकास विलंब नहीं ✓", mr: "विकास विलंब आढळले नाही ✓" },
+    exportReport: { en: "Export Full Report", hi: "पूर्ण रिपोर्ट निर्यात", mr: "पूर्ण अहवाल निर्यात" },
+  };
+
+  const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
+
+  return (
+    <div className="page-container">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center">
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <div className="flex-1">
+          <h2 className="text-lg font-bold">{tl("supervisorDashboard")}</h2>
+          <p className="text-xs text-muted-foreground">{tl("centerOverview")}</p>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={exportSupervisorPDF}
+          className="px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-primary/20"
+        >
+          <Download className="w-3.5 h-3.5" /> PDF
+        </motion.button>
+      </div>
+
+      {/* Section Tabs */}
+      <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+        {sections.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setActiveSection(s.key)}
+            className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+              activeSection === s.key
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-muted-foreground"
+            }`}
+          >
+            {t(s.labelKey)}
+          </button>
+        ))}
+      </div>
+
+      {/* ─── OVERVIEW ────────────────────────────────────── */}
+      {activeSection === "overview" && (
+        <div className="space-y-5">
+          {/* Top Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard icon={Users} label={t("totalChildren")} value={mockChildren.length} trend={`${mockChildren.length} registered`} color="ai" delay={0} />
+            <StatCard icon={Package} label={tl("stockAlerts")} value={stockAlerts.length} trend={`${lowStockCount} low`} color={stockAlerts.length > 0 ? "severe" : "normal"} delay={1} />
+            <StatCard icon={Syringe} label={t("vaccinated")} value={`${vaccineStats.pct}%`} trend={`${vaccineStats.overdue} ${t("overdue").toLowerCase()}`} color={vaccineStats.overdue > 0 ? "risk" : "normal"} delay={2} />
+            <StatCard icon={Brain} label={tl("devDelays")} value={childrenWithDelays.length} trend={tl("childrenAtRisk")} color={childrenWithDelays.length > 0 ? "risk" : "normal"} delay={3} />
+          </div>
+
+          {/* Critical Alerts */}
+          {stockAlerts.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+              {stockAlerts.map((a) => (
+                <div key={a.id} className="health-badge-severe p-3 rounded-xl border border-health-severe/20 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-health-severe flex-shrink-0" />
+                  <p className="text-xs font-semibold text-health-severe-foreground">
+                    ⚠ {t(a.nameKey as TranslationKey)}: {a.current} {a.unit} ({t("critical").toLowerCase()})
+                  </p>
+                </div>
+              ))}
+            </motion.div>
+          )}
+
+          {overdueChildren.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-2">
+              {overdueChildren.slice(0, 3).map((e) => (
+                <div key={e.child.id} className="health-badge-risk p-3 rounded-xl border border-health-risk/20 flex items-center gap-2">
+                  <Syringe className="w-4 h-4 text-health-risk flex-shrink-0" />
+                  <p className="text-xs font-semibold text-health-risk-foreground">
+                    {e.child.name}: {e.vaccines.map((v) => v.name).join(", ")} {t("overdue").toLowerCase()}
+                  </p>
+                </div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Quick Links */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { icon: Package, labelKey: "stock" as TranslationKey, path: "/nutrition", color: "bg-health-risk-bg text-health-risk" },
+              { icon: Syringe, labelKey: "vaccines" as TranslationKey, path: "/vaccines", color: "bg-health-normal-bg text-health-normal" },
+              { icon: Users, labelKey: "children" as TranslationKey, path: "/children", color: "bg-health-ai-bg text-health-ai" },
+            ].map((a, i) => (
+              <motion.button
+                key={a.labelKey}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 + i * 0.06 }}
+                onClick={() => navigate(a.path)}
+                className="stat-card flex flex-col items-center gap-2 py-4 active:scale-95 transition-transform"
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.color}`}>
+                  <a.icon className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-medium">{t(a.labelKey)}</span>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── STOCK DETAIL ─────────────────────────────────── */}
+      {activeSection === "stock" && (
+        <div className="space-y-3">
+          {stock.map((item, i) => {
+            const status = getStockStatus(item.current, item.minimum);
+            const pct = Math.min((item.current / item.maximum) * 100, 100);
+            const statusLabel = status === "severe" ? t("critical") : status === "risk" ? t("lowStock") : t("sufficient");
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="stat-card"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold">{t(item.nameKey as TranslationKey)}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold">{item.current} {item.unit}</span>
+                    <StatusBadge status={status}>{statusLabel}</StatusBadge>
+                  </div>
+                </div>
+                <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden">
+                  <motion.div
+                    className={`h-full rounded-full ${
+                      status === "severe" ? "bg-health-severe" : status === "risk" ? "bg-health-risk" : "bg-health-normal"
+                    }`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 0.6, delay: i * 0.05 }}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Min: {item.minimum} {item.unit}</p>
+              </motion.div>
+            );
+          })}
+
+          {stockAlerts.length === 0 && (
+            <div className="text-center py-8 text-sm text-muted-foreground">{tl("noAlerts")}</div>
+          )}
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/nutrition")}
+            className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center gap-2"
+          >
+            {t("viewAll")} <ChevronRight className="w-4 h-4" />
+          </motion.button>
+        </div>
+      )}
+
+      {/* ─── VACCINE DETAIL ────────────────────────────────── */}
+      {activeSection === "vaccine" && (
+        <div className="space-y-4">
+          {/* Summary Stats */}
+          <div className="grid grid-cols-3 gap-3">
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="stat-card text-center">
+              <div className="w-10 h-10 rounded-xl bg-health-normal-bg flex items-center justify-center mx-auto mb-2">
+                <CheckCircle2 className="w-5 h-5 text-health-normal" />
+              </div>
+              <p className="text-xl font-bold text-health-normal">{vaccineStats.pct}%</p>
+              <p className="text-[10px] text-muted-foreground">{t("vaccinated")}</p>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="stat-card text-center">
+              <div className="w-10 h-10 rounded-xl bg-health-severe-bg flex items-center justify-center mx-auto mb-2">
+                <AlertTriangle className="w-5 h-5 text-health-severe" />
+              </div>
+              <p className="text-xl font-bold text-health-severe">{vaccineStats.overdue}</p>
+              <p className="text-[10px] text-muted-foreground">{t("overdue")}</p>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="stat-card text-center">
+              <div className="w-10 h-10 rounded-xl bg-health-risk-bg flex items-center justify-center mx-auto mb-2">
+                <Clock className="w-5 h-5 text-health-risk" />
+              </div>
+              <p className="text-xl font-bold text-health-risk">{vaccineStats.dueSoon}</p>
+              <p className="text-[10px] text-muted-foreground">{t("dueSoon")}</p>
+            </motion.div>
+          </div>
+
+          {/* Overdue list */}
+          <h3 className="section-title flex items-center gap-2">
+            <ShieldAlert className="w-3.5 h-3.5" /> {tl("overdueVaccines")}
+          </h3>
+          {overdueChildren.length === 0 ? (
+            <div className="text-center py-6 text-sm text-muted-foreground">{tl("noOverdue")}</div>
+          ) : (
+            overdueChildren.map((entry, i) => (
+              <motion.div
+                key={entry.child.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                onClick={() => navigate(`/child/${entry.child.id}`)}
+                className="stat-card flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+              >
+                <div className="w-10 h-10 rounded-xl bg-health-severe-bg flex items-center justify-center text-lg">💉</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">{entry.child.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{entry.child.village}</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {entry.vaccines.map((v) => (
+                      <StatusBadge key={v.id} status="severe">{v.name}</StatusBadge>
+                    ))}
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              </motion.div>
+            ))
+          )}
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/vaccines")}
+            className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center gap-2"
+          >
+            {t("viewAll")} <ChevronRight className="w-4 h-4" />
+          </motion.button>
+        </div>
+      )}
+
+      {/* ─── DEVELOPMENT DELAY DETAIL ──────────────────────── */}
+      {activeSection === "development" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard icon={Brain} label={tl("devDelays")} value={childrenWithDelays.length} color={childrenWithDelays.length > 0 ? "risk" : "normal"} delay={0} />
+            <StatCard icon={Activity} label={t("totalChildren")} value={mockChildren.length} trend={`${Math.round(((mockChildren.length - childrenWithDelays.length) / mockChildren.length) * 100)}% ${t("normal").toLowerCase()}`} color="normal" delay={1} />
+          </div>
+
+          <h3 className="section-title flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5" /> {tl("childrenAtRisk")}
+          </h3>
+
+          {childrenWithDelays.length === 0 ? (
+            <div className="text-center py-6 text-sm text-muted-foreground">{tl("noDelays")}</div>
+          ) : (
+            childrenWithDelays.map((child, i) => (
+              <motion.div
+                key={child.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                onClick={() => navigate(`/child/${child.id}`)}
+                className="stat-card cursor-pointer active:scale-[0.98] transition-transform"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-health-risk-bg flex items-center justify-center text-lg">🧠</div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold">{child.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{child.age} · {child.village}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div className="flex items-center gap-2 ml-13">
+                  <span className="text-[10px] text-muted-foreground">{tl("delayAreas")}:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {child.delays.map((d) => (
+                      <StatusBadge key={d} status="risk">{t(d as TranslationKey)}</StatusBadge>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/children")}
+            className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center gap-2"
+          >
+            {t("viewAll")} <ChevronRight className="w-4 h-4" />
+          </motion.button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SupervisorDashboard;
