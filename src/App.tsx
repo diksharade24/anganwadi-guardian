@@ -15,6 +15,7 @@ import MicroLearning from "./pages/MicroLearning";
 import Attendance from "./pages/Attendance";
 import NutritionStock from "./pages/NutritionStock";
 import VaccineTracker from "./pages/VaccineTracker";
+import SupervisorDashboard from "./pages/SupervisorDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/nutrition" element={<NutritionStock />} />
               <Route path="/vaccines" element={<VaccineTracker />} />
+              <Route path="/supervisor" element={<SupervisorDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
