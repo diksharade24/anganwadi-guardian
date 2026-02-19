@@ -15,6 +15,8 @@ import {
   ShieldAlert,
   TrendingUp,
   Activity,
+  Navigation,
+  MapPin,
 } from "lucide-react";
 import { StatCard, StatusBadge } from "@/components/HealthWidgets";
 import { exportToPDF } from "@/lib/pdfExport";
@@ -124,7 +126,7 @@ const getVaccineStatus = (vaccine: Vaccine, dob: string, completed: string[]) =>
 const SupervisorDashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
-  const [activeSection, setActiveSection] = useState<"overview" | "stock" | "vaccine" | "development">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "stock" | "vaccine" | "development" | "visits">("overview");
 
   // Stock data from localStorage or defaults
   const stock: StockItem[] = useMemo(() => {
@@ -210,6 +212,7 @@ const SupervisorDashboard = () => {
     { key: "stock" as const, labelKey: "stock" as TranslationKey },
     { key: "vaccine" as const, labelKey: "vaccines" as TranslationKey },
     { key: "development" as const, labelKey: "development" as TranslationKey },
+    { key: "visits" as const, labelKey: "navVisits" as TranslationKey },
   ];
 
   const sectionLabels: Record<string, Record<string, string>> = {
@@ -225,6 +228,12 @@ const SupervisorDashboard = () => {
     delayAreas: { en: "Delay Areas", hi: "विलंब क्षेत्र", mr: "विलंब क्षेत्रे" },
     noDelays: { en: "No development delays detected ✓", hi: "कोई विकास विलंब नहीं ✓", mr: "विकास विलंब आढळले नाही ✓" },
     exportReport: { en: "Export Full Report", hi: "पूर्ण रिपोर्ट निर्यात", mr: "पूर्ण अहवाल निर्यात" },
+    totalVisits: { en: "Total Visits", hi: "कुल विजिट", mr: "एकूण भेटी" },
+    missedHouseholds: { en: "Missed Households", hi: "छूटे हुए घर", mr: "चुकलेली घरे" },
+    missedPct: { en: "Missed %", hi: "छूटा %", mr: "चुकलेला %" },
+    distanceCovered: { en: "Distance Covered", hi: "तय दूरी", mr: "अंतर कापले" },
+    workerVisitStats: { en: "Worker Visit Summary", hi: "कार्यकर्ता विजिट सारांश", mr: "कर्मचारी भेट सारांश" },
+    householdsNeedFollowUp: { en: "Households Needing Follow-up", hi: "अनुसरण आवश्यक घर", mr: "अनुसरण आवश्यक घरे" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
@@ -502,6 +511,75 @@ const SupervisorDashboard = () => {
           </motion.button>
         </div>
       )}
+
+      {/* ─── VISITS DETAIL ──────────────────────────────────── */}
+      {activeSection === "visits" && (() => {
+        const savedVisits: { id: string; householdId: string; date: string; time: string; lat: number | null; lng: number | null; workerName: string }[] = JSON.parse(localStorage.getItem("gps-visits") || "[]");
+        const totalHouseholds = 8;
+        const visitedHouseholdIds = new Set(savedVisits.map((v) => v.householdId));
+        const missedCount = totalHouseholds - visitedHouseholdIds.size;
+        const missedPct = Math.round((missedCount / totalHouseholds) * 100);
+        // Estimate distance: ~0.5km per visit
+        const distanceKm = (savedVisits.length * 0.5).toFixed(1);
+
+        const followUpHouseholds = [
+          { id: "h1", name: "Kumari Family", village: "Rampur", child: "Priya Kumari", isHighRisk: true },
+          { id: "h2", name: "Singh Family", village: "Sundarpur", child: "Arjun Singh", isHighRisk: false },
+          { id: "h3", name: "Devi Family", village: "Rampur", child: "Meera Devi", isHighRisk: false },
+          { id: "h4", name: "Kumar Family", village: "Keshavpur", child: "Rahul Kumar", isHighRisk: true },
+          { id: "h5", name: "Sharma Family", village: "Rampur", child: "Anita Sharma", isHighRisk: false },
+          { id: "h6", name: "Yadav Family", village: "Sundarpur", child: "Vikram Yadav", isHighRisk: false },
+          { id: "h7", name: "Kumari-K Family", village: "Keshavpur", child: "Sita Kumari", isHighRisk: true },
+          { id: "h8", name: "Prasad Family", village: "Rampur", child: "Ravi Prasad", isHighRisk: false },
+        ].filter((h) => !visitedHouseholdIds.has(h.id));
+
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <StatCard icon={Navigation} label={tl("totalVisits")} value={savedVisits.length} trend={`by Sunita`} color="ai" delay={0} />
+              <StatCard icon={AlertTriangle} label={tl("missedHouseholds")} value={missedCount} trend={`${missedPct}%`} color={missedCount > 0 ? "severe" : "normal"} delay={1} />
+              <StatCard icon={MapPin} label={tl("distanceCovered")} value={`${distanceKm} km`} color="normal" delay={2} />
+              <StatCard icon={Users} label={t("totalChildren")} value={totalHouseholds} trend={`${visitedHouseholdIds.size} ${tl("totalVisits").toLowerCase()}`} color="ai" delay={3} />
+            </div>
+
+            {followUpHouseholds.length > 0 && (
+              <>
+                <h3 className="section-title flex items-center gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5" /> {tl("householdsNeedFollowUp")}
+                </h3>
+                {followUpHouseholds.map((h, i) => (
+                  <motion.div
+                    key={h.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    className="stat-card flex items-center gap-3"
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${h.isHighRisk ? "bg-health-severe-bg" : "bg-health-risk-bg"}`}>
+                      <AlertTriangle className={`w-4 h-4 ${h.isHighRisk ? "text-health-severe" : "text-health-risk"}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold">{h.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{h.village} · {h.child}</p>
+                    </div>
+                    <StatusBadge status={h.isHighRisk ? "severe" : "risk"}>
+                      {h.isHighRisk ? "⚠ High Risk" : "Not visited"}
+                    </StatusBadge>
+                  </motion.div>
+                ))}
+              </>
+            )}
+
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/visits")}
+              className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center gap-2"
+            >
+              {t("viewAll")} <ChevronRight className="w-4 h-4" />
+            </motion.button>
+          </div>
+        );
+      })()}
     </div>
   );
 };
