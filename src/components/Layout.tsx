@@ -8,6 +8,7 @@ import {
   Map,
   Mic,
   BookOpen,
+  Navigation,
   Wifi,
   WifiOff,
   Globe,
@@ -19,7 +20,7 @@ const navKeys = [
   { path: "/children", icon: Users, key: "navChildren" as const },
   { path: "/scan", icon: Camera, key: "navScan" as const },
   { path: "/map", icon: Map, key: "navMap" as const },
-  { path: "/learn", icon: BookOpen, key: "navLearn" as const },
+  { path: "/visits", icon: Navigation, key: "navVisits" as const },
   { path: "/voice", icon: Mic, key: "navVoice" as const },
 ];
 
