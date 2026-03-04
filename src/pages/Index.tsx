@@ -52,7 +52,7 @@ const Dashboard = () => {
     { icon: Package, labelKey: "stock" as const, color: "bg-health-risk-bg text-health-risk", path: "/nutrition" },
     { icon: Syringe, labelKey: "vaccines" as const, color: "bg-health-normal-bg text-health-normal", path: "/vaccines" },
     { icon: Brain, labelKey: "aiScan" as const, color: "bg-health-advanced-bg text-health-advanced", path: "/scan" },
-    { icon: Baby, labelKey: "addChild" as const, color: "bg-health-ai-bg text-health-ai", path: "/children" },
+    { icon: Baby, labelKey: "addChild" as const, color: "bg-health-ai-bg text-health-ai", path: "/children/add" },
     { icon: Activity, labelKey: "recordVisit" as const, color: "bg-health-normal-bg text-health-normal", path: "/" },
     { icon: BookOpen, labelKey: "learn" as const, color: "bg-health-ai-bg text-health-ai", path: "/learn" },
   ];

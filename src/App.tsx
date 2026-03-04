@@ -15,6 +15,7 @@ import MicroLearning from "./pages/MicroLearning";
 import Attendance from "./pages/Attendance";
 import AttendanceHistory from "./pages/AttendanceHistory";
 import NutritionStock from "./pages/NutritionStock";
+import AddChild from "./pages/AddChild";
 import VaccineTracker from "./pages/VaccineTracker";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import VisitTracking from "./pages/VisitTracking";
@@ -33,6 +34,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/children" element={<ChildrenList />} />
+              <Route path="/children/add" element={<AddChild />} />
               <Route path="/child/:id" element={<ChildProfile />} />
               <Route path="/scan" element={<AIScan />} />
               <Route path="/map" element={<GeoMap />} />
