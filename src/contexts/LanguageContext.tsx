@@ -199,6 +199,28 @@ const translations = {
   name: { en: "Name", hi: "नाम", mr: "नाव" },
   status: { en: "Status", hi: "स्थिति", mr: "स्थिती" },
   viewHistory: { en: "View History", hi: "इतिहास देखें", mr: "इतिहास पहा" },
+
+  // Add Child
+  registerChild: { en: "Register Child", hi: "बच्चे का पंजीकरण", mr: "मुलाची नोंदणी" },
+  fillChildDetails: { en: "Fill in child & guardian details", hi: "बच्चे और अभिभावक का विवरण भरें", mr: "मूल आणि पालकांचे तपशील भरा" },
+  childName: { en: "Child Name", hi: "बच्चे का नाम", mr: "मुलाचे नाव" },
+  enterChildName: { en: "Enter child's name", hi: "बच्चे का नाम दर्ज करें", mr: "मुलाचे नाव टाका" },
+  motherName: { en: "Mother's Name", hi: "माता का नाम", mr: "आईचे नाव" },
+  enterMotherName: { en: "Enter mother's name", hi: "माता का नाम दर्ज करें", mr: "आईचे नाव टाका" },
+  fatherName: { en: "Father's Name", hi: "पिता का नाम", mr: "वडिलांचे नाव" },
+  enterFatherName: { en: "Enter father's name", hi: "पिता का नाम दर्ज करें", mr: "वडिलांचे नाव टाका" },
+  optional: { en: "Optional", hi: "वैकल्पिक", mr: "ऐच्छिक" },
+  dateOfBirth: { en: "Date of Birth", hi: "जन्म तिथि", mr: "जन्मतारीख" },
+  gender: { en: "Gender", hi: "लिंग", mr: "लिंग" },
+  male: { en: "Male", hi: "पुरुष", mr: "पुरुष" },
+  female: { en: "Female", hi: "महिला", mr: "स्त्री" },
+  other: { en: "Other", hi: "अन्य", mr: "इतर" },
+  village: { en: "Village", hi: "गाँव", mr: "गाव" },
+  selectVillage: { en: "Select village", hi: "गाँव चुनें", mr: "गाव निवडा" },
+  phoneNumber: { en: "Phone Number", hi: "फोन नंबर", mr: "फोन नंबर" },
+  weight: { en: "Weight", hi: "वजन", mr: "वजन" },
+  height: { en: "Height", hi: "ऊंचाई", mr: "उंची" },
+  childRegistered: { en: "Child registered successfully!", hi: "बच्चे का पंजीकरण सफल!", mr: "मुलाची नोंदणी यशस्वी!" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
