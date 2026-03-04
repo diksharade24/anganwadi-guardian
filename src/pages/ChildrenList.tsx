@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, ChevronRight } from "lucide-react";
+import { Search, Filter, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { StatusBadge, RiskGauge } from "@/components/HealthWidgets";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -35,7 +35,16 @@ const ChildrenList = () => {
 
   return (
     <div className="page-container">
-      <h2 className="text-xl font-bold mb-4">{t("childrenRegistry")}</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">{t("childrenRegistry")}</h2>
+        <button
+          onClick={() => navigate("/children/add")}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+        >
+          <Plus className="w-4 h-4" />
+          {t("addChild")}
+        </button>
+      </div>
 
       {/* Search */}
       <div className="relative mb-4">
