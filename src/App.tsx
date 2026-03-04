@@ -13,6 +13,7 @@ import GeoMap from "./pages/GeoMap";
 import VoiceAssistant from "./pages/VoiceAssistant";
 import MicroLearning from "./pages/MicroLearning";
 import Attendance from "./pages/Attendance";
+import AttendanceHistory from "./pages/AttendanceHistory";
 import NutritionStock from "./pages/NutritionStock";
 import VaccineTracker from "./pages/VaccineTracker";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/voice" element={<VoiceAssistant />} />
               <Route path="/learn" element={<MicroLearning />} />
               <Route path="/attendance" element={<Attendance />} />
+              <Route path="/attendance/history" element={<AttendanceHistory />} />
               <Route path="/nutrition" element={<NutritionStock />} />
               <Route path="/vaccines" element={<VaccineTracker />} />
               <Route path="/supervisor" element={<SupervisorDashboard />} />

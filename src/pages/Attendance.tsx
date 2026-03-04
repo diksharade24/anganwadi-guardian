@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, CheckCheck, Save } from "lucide-react";
+import { ArrowLeft, CheckCheck, Save, History } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -141,17 +141,29 @@ const Attendance = () => {
         })}
       </div>
 
-      {/* Save */}
-      <motion.button
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={saveAttendance}
-        className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
-      >
-        <Save className="w-4 h-4" /> {t("saveAttendance")}
-      </motion.button>
+      {/* Actions */}
+      <div className="flex gap-2">
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={saveAttendance}
+          className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
+        >
+          <Save className="w-4 h-4" /> {t("saveAttendance")}
+        </motion.button>
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => navigate("/attendance/history")}
+          className="py-3 px-4 rounded-xl bg-muted font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
+        >
+          <History className="w-4 h-4" />
+        </motion.button>
+      </div>
     </div>
   );
 };
