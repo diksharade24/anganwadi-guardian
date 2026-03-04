@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Search, Filter, ChevronRight, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StatusBadge, RiskGauge } from "@/components/HealthWidgets";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const allChildren = [
+const mockChildren = [
   { id: "1", name: "Priya Kumari", age: "2y 4m", score: 78, status: "severe" as const, village: "Rampur" },
   { id: "2", name: "Arjun Singh", age: "1y 8m", score: 65, status: "risk" as const, village: "Sundarpur" },
   { id: "3", name: "Meera Devi", age: "3y 1m", score: 72, status: "severe" as const, village: "Rampur" },
@@ -16,11 +16,43 @@ const allChildren = [
   { id: "8", name: "Ravi Prasad", age: "3y 7m", score: 10, status: "normal" as const, village: "Rampur" },
 ];
 
+type ChildEntry = { id: string; name: string; age: string; score: number; status: "normal" | "risk" | "severe"; village: string };
+
+const computeAge = (dob: string): string => {
+  const birth = new Date(dob);
+  const now = new Date();
+  let years = now.getFullYear() - birth.getFullYear();
+  let months = now.getMonth() - birth.getMonth();
+  if (months < 0) { years--; months += 12; }
+  return `${years}y ${months}m`;
+};
+
+const loadRegisteredChildren = (): ChildEntry[] => {
+  try {
+    const stored = JSON.parse(localStorage.getItem("registered-children") || "[]");
+    return stored.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      age: c.dob ? computeAge(c.dob) : "N/A",
+      score: Math.round(((c.weight || 10) / (c.height || 75)) * 100),
+      status: "normal" as const,
+      village: c.village || "Unknown",
+    }));
+  } catch { return []; }
+};
+
 const ChildrenList = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<"all" | "normal" | "risk" | "severe">("all");
   const [search, setSearch] = useState("");
   const { t } = useLanguage();
+
+  const [allChildren, setAllChildren] = useState<ChildEntry[]>(mockChildren);
+
+  useEffect(() => {
+    const registered = loadRegisteredChildren();
+    setAllChildren([...mockChildren, ...registered]);
+  }, []);
 
   const filtered = allChildren
     .filter((c) => filter === "all" || c.status === filter)
