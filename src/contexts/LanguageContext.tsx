@@ -185,6 +185,20 @@ const translations = {
   supervisor: { en: "Supervisor", hi: "पर्यवेक्षक", mr: "पर्यवेक्षक" },
   navVisits: { en: "Visits", hi: "विजिट", mr: "भेटी" },
   visitTracking: { en: "Visit Tracking", hi: "विजिट ट्रैकिंग", mr: "भेट ट्रॅकिंग" },
+
+  // Attendance History
+  attendanceHistory: { en: "Attendance History", hi: "उपस्थिति इतिहास", mr: "उपस्थिती इतिहास" },
+  reviewPastRecords: { en: "Review past attendance records", hi: "पिछले उपस्थिति रिकॉर्ड देखें", mr: "मागील उपस्थिती नोंदी पहा" },
+  sessionType: { en: "Session", hi: "सत्र", mr: "सत्र" },
+  date: { en: "Date", hi: "तारीख", mr: "तारीख" },
+  allSessions: { en: "All Sessions", hi: "सभी सत्र", mr: "सर्व सत्रे" },
+  allDates: { en: "All Dates", hi: "सभी तारीखें", mr: "सर्व तारखा" },
+  totalRecords: { en: "Records", hi: "रिकॉर्ड", mr: "नोंदी" },
+  avgAttendance: { en: "Avg. Attendance", hi: "औसत उपस्थिति", mr: "सरासरी उपस्थिती" },
+  noAttendanceRecords: { en: "No attendance records yet. Take attendance first!", hi: "अभी तक कोई उपस्थिति रिकॉर्ड नहीं। पहले उपस्थिति लें!", mr: "अद्याप उपस्थिती नोंदी नाहीत. आधी उपस्थिती घ्या!" },
+  name: { en: "Name", hi: "नाम", mr: "नाव" },
+  status: { en: "Status", hi: "स्थिति", mr: "स्थिती" },
+  viewHistory: { en: "View History", hi: "इतिहास देखें", mr: "इतिहास पहा" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
