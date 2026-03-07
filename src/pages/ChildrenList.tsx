@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, ChevronRight, Plus } from "lucide-react";
+import { Search, Filter, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { StatusBadge, RiskGauge } from "@/components/HealthWidgets";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
 const mockChildren = [
   { id: "1", name: "Priya Kumari", age: "2y 4m", score: 78, status: "severe" as const, village: "Rampur" },
@@ -16,7 +17,7 @@ const mockChildren = [
   { id: "8", name: "Ravi Prasad", age: "3y 7m", score: 10, status: "normal" as const, village: "Rampur" },
 ];
 
-type ChildEntry = { id: string; name: string; age: string; score: number; status: "normal" | "risk" | "severe"; village: string };
+type ChildEntry = { id: string; name: string; age: string; score: number; status: "normal" | "risk" | "severe"; village: string; isRegistered?: boolean };
 
 const computeAge = (dob: string): string => {
   const birth = new Date(dob);
@@ -37,6 +38,7 @@ const loadRegisteredChildren = (): ChildEntry[] => {
       score: Math.round(((c.weight || 10) / (c.height || 75)) * 100),
       status: "normal" as const,
       village: c.village || "Unknown",
+      isRegistered: true,
     }));
   } catch { return []; }
 };
@@ -53,6 +55,23 @@ const ChildrenList = () => {
     const registered = loadRegisteredChildren();
     setAllChildren([...mockChildren, ...registered]);
   }, []);
+
+  const handleDelete = (childId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(t("confirmDeleteChild"))) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem("registered-children") || "[]");
+      const updated = stored.filter((c: any) => c.id !== childId);
+      localStorage.setItem("registered-children", JSON.stringify(updated));
+      setAllChildren((prev) => prev.filter((c) => c.id !== childId));
+      toast.success(t("childDeleted"));
+    } catch {}
+  };
+
+  const handleEdit = (childId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/children/add?edit=${childId}`);
+  };
 
   const filtered = allChildren
     .filter((c) => filter === "all" || c.status === filter)
@@ -132,6 +151,22 @@ const ChildrenList = () => {
             <StatusBadge status={child.status}>
               {child.status === "severe" ? t("severe") : child.status === "risk" ? t("atRisk") : t("normal")}
             </StatusBadge>
+            {child.isRegistered && (
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={(e) => handleEdit(child.id, e)}
+                  className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-primary" />
+                </button>
+                <button
+                  onClick={(e) => handleDelete(child.id, e)}
+                  className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                </button>
+              </div>
+            )}
             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </motion.div>
         ))}
