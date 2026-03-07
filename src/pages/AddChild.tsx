@@ -121,7 +121,7 @@ const AddChild = () => {
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <h2 className="text-lg font-bold">{t("registerChild")}</h2>
+          <h2 className="text-lg font-bold">{editId ? t("editChild") : t("registerChild")}</h2>
           <p className="text-xs text-muted-foreground">{t("fillChildDetails")}</p>
         </div>
       </motion.div>
@@ -265,7 +265,7 @@ const AddChild = () => {
         onClick={handleSubmit}
         className="w-full mt-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
       >
-        <UserPlus className="w-4 h-4" /> {t("registerChild")}
+        {editId ? <Save className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />} {editId ? t("updateChild") : t("registerChild")}
       </motion.button>
     </div>
   );
