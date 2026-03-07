@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, UserPlus, Baby, MapPin, Calendar, User, Phone, Weight, Ruler } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, UserPlus, Baby, MapPin, Calendar, User, Phone, Weight, Ruler, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { z } from "zod";
@@ -28,6 +28,8 @@ const fieldClass =
 
 const AddChild = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit");
   const { t } = useLanguage();
 
   const [form, setForm] = useState<ChildForm>({
@@ -43,6 +45,28 @@ const AddChild = () => {
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof ChildForm, string>>>({});
+
+  // Load existing child data when editing
+  useEffect(() => {
+    if (!editId) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem("registered-children") || "[]");
+      const child = stored.find((c: any) => c.id === editId);
+      if (child) {
+        setForm({
+          name: child.name || "",
+          motherName: child.motherName || "",
+          fatherName: child.fatherName || "",
+          dob: child.dob || "",
+          gender: child.gender || "female",
+          village: child.village || "",
+          phone: child.phone || "",
+          weight: child.weight || "",
+          height: child.height || "",
+        });
+      }
+    } catch {}
+  }, [editId]);
 
   const set = (key: keyof ChildForm, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -61,19 +85,28 @@ const AddChild = () => {
       return;
     }
 
-    // Save to localStorage
     const children = JSON.parse(localStorage.getItem("registered-children") || "[]");
-    const newChild = {
-      id: `custom-${Date.now()}`,
-      ...result.data,
-      registeredAt: new Date().toISOString(),
-    };
-    children.push(newChild);
-    localStorage.setItem("registered-children", JSON.stringify(children));
 
-    toast.success(t("childRegistered"), {
-      description: result.data.name,
-    });
+    if (editId) {
+      // Update existing child
+      const idx = children.findIndex((c: any) => c.id === editId);
+      if (idx !== -1) {
+        children[idx] = { ...children[idx], ...result.data };
+        localStorage.setItem("registered-children", JSON.stringify(children));
+        toast.success(t("childUpdated"), { description: result.data.name });
+      }
+    } else {
+      // Save new child
+      const newChild = {
+        id: `custom-${Date.now()}`,
+        ...result.data,
+        registeredAt: new Date().toISOString(),
+      };
+      children.push(newChild);
+      localStorage.setItem("registered-children", JSON.stringify(children));
+      toast.success(t("childRegistered"), { description: result.data.name });
+    }
+
     navigate("/children");
   };
 
