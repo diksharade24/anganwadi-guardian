@@ -20,6 +20,7 @@ import VaccineTracker from "./pages/VaccineTracker";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import VisitTracking from "./pages/VisitTracking";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
@@ -30,25 +31,26 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/children" element={<ChildrenList />} />
-              <Route path="/children/add" element={<AddChild />} />
-              <Route path="/child/:id" element={<ChildProfile />} />
-              <Route path="/scan" element={<AIScan />} />
-              <Route path="/map" element={<GeoMap />} />
-              <Route path="/voice" element={<VoiceAssistant />} />
-              <Route path="/learn" element={<MicroLearning />} />
-              <Route path="/attendance" element={<Attendance />} />
-              <Route path="/attendance/history" element={<AttendanceHistory />} />
-              <Route path="/nutrition" element={<NutritionStock />} />
-              <Route path="/vaccines" element={<VaccineTracker />} />
-              <Route path="/supervisor" element={<SupervisorDashboard />} />
-              <Route path="/visits" element={<VisitTracking />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route element={<Layout><></></Layout>}>
+            </Route>
+            <Route path="/" element={<Layout><Index /></Layout>} />
+            <Route path="/children" element={<Layout><ChildrenList /></Layout>} />
+            <Route path="/children/add" element={<Layout><AddChild /></Layout>} />
+            <Route path="/child/:id" element={<Layout><ChildProfile /></Layout>} />
+            <Route path="/scan" element={<Layout><AIScan /></Layout>} />
+            <Route path="/map" element={<Layout><GeoMap /></Layout>} />
+            <Route path="/voice" element={<Layout><VoiceAssistant /></Layout>} />
+            <Route path="/learn" element={<Layout><MicroLearning /></Layout>} />
+            <Route path="/attendance" element={<Layout><Attendance /></Layout>} />
+            <Route path="/attendance/history" element={<Layout><AttendanceHistory /></Layout>} />
+            <Route path="/nutrition" element={<Layout><NutritionStock /></Layout>} />
+            <Route path="/vaccines" element={<Layout><VaccineTracker /></Layout>} />
+            <Route path="/supervisor" element={<Layout><SupervisorDashboard /></Layout>} />
+            <Route path="/visits" element={<Layout><VisitTracking /></Layout>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </LanguageProvider>
     </TooltipProvider>
