@@ -56,6 +56,23 @@ const ChildrenList = () => {
     setAllChildren([...mockChildren, ...registered]);
   }, []);
 
+  const handleDelete = (childId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(t("confirmDeleteChild"))) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem("registered-children") || "[]");
+      const updated = stored.filter((c: any) => c.id !== childId);
+      localStorage.setItem("registered-children", JSON.stringify(updated));
+      setAllChildren((prev) => prev.filter((c) => c.id !== childId));
+      toast.success(t("childDeleted"));
+    } catch {}
+  };
+
+  const handleEdit = (childId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/children/add?edit=${childId}`);
+  };
+
   const filtered = allChildren
     .filter((c) => filter === "all" || c.status === filter)
     .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
