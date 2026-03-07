@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, ChevronRight, Plus } from "lucide-react";
+import { Search, Filter, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { StatusBadge, RiskGauge } from "@/components/HealthWidgets";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
 const mockChildren = [
   { id: "1", name: "Priya Kumari", age: "2y 4m", score: 78, status: "severe" as const, village: "Rampur" },
@@ -16,7 +17,7 @@ const mockChildren = [
   { id: "8", name: "Ravi Prasad", age: "3y 7m", score: 10, status: "normal" as const, village: "Rampur" },
 ];
 
-type ChildEntry = { id: string; name: string; age: string; score: number; status: "normal" | "risk" | "severe"; village: string };
+type ChildEntry = { id: string; name: string; age: string; score: number; status: "normal" | "risk" | "severe"; village: string; isRegistered?: boolean };
 
 const computeAge = (dob: string): string => {
   const birth = new Date(dob);
@@ -37,6 +38,7 @@ const loadRegisteredChildren = (): ChildEntry[] => {
       score: Math.round(((c.weight || 10) / (c.height || 75)) * 100),
       status: "normal" as const,
       village: c.village || "Unknown",
+      isRegistered: true,
     }));
   } catch { return []; }
 };

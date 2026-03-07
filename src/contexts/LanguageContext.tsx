@@ -221,6 +221,12 @@ const translations = {
   weight: { en: "Weight", hi: "वजन", mr: "वजन" },
   height: { en: "Height", hi: "ऊंचाई", mr: "उंची" },
   childRegistered: { en: "Child registered successfully!", hi: "बच्चे का पंजीकरण सफल!", mr: "मुलाची नोंदणी यशस्वी!" },
+  childUpdated: { en: "Child updated successfully!", hi: "बच्चे की जानकारी अपडेट हुई!", mr: "मुलाची माहिती अपडेट झाली!" },
+  childDeleted: { en: "Child removed from registry", hi: "बच्चे को रजिस्ट्री से हटाया गया", mr: "मुलाला नोंदणीतून काढले" },
+  editChild: { en: "Edit Child", hi: "बच्चे को संपादित करें", mr: "मुलाची माहिती बदला" },
+  deleteChild: { en: "Delete", hi: "हटाएं", mr: "काढा" },
+  confirmDeleteChild: { en: "Are you sure you want to remove this child?", hi: "क्या आप इस बच्चे को हटाना चाहते हैं?", mr: "तुम्हाला हे मूल काढायचे आहे का?" },
+  updateChild: { en: "Update Child", hi: "अपडेट करें", mr: "अपडेट करा" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
