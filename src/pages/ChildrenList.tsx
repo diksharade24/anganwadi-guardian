@@ -151,6 +151,22 @@ const ChildrenList = () => {
             <StatusBadge status={child.status}>
               {child.status === "severe" ? t("severe") : child.status === "risk" ? t("atRisk") : t("normal")}
             </StatusBadge>
+            {child.isRegistered && (
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={(e) => handleEdit(child.id, e)}
+                  className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-primary" />
+                </button>
+                <button
+                  onClick={(e) => handleDelete(child.id, e)}
+                  className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                </button>
+              </div>
+            )}
             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </motion.div>
         ))}
