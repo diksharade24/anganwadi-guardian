@@ -345,6 +345,78 @@ const CenterComparison = () => {
         </div>
       </motion.div>
 
+      {/* Monthly Trend Charts */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="stat-card mb-6">
+        <h3 className="section-title mb-3">{tl("trendTitle")}</h3>
+        
+        {/* Trend metric toggle */}
+        <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+          {([
+            { key: "overall" as TrendMetric, label: tl("trendOverall") },
+            { key: "vaccine" as TrendMetric, label: tl("trendVaccine") },
+            { key: "malnutrition" as TrendMetric, label: tl("trendMalnutrition") },
+            { key: "attendance" as TrendMetric, label: tl("trendAttendance") },
+          ]).map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setTrendMetric(opt.key)}
+              className={`px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap transition-colors ${
+                trendMetric === opt.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={months.map((month, mi) => ({
+                month,
+                ...Object.fromEntries(
+                  centersData.map((c) => [
+                    c.name.replace("AWC ", ""),
+                    monthlyTrends[c.id]?.[trendMetric]?.[mi] ?? 0,
+                  ])
+                ),
+              }))}
+              margin={{ top: 5, right: 5, bottom: 5, left: -15 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+              <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={trendMetric === "malnutrition" ? [10, 50] : [40, 100]} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "0.75rem",
+                  border: "1px solid hsl(var(--border))",
+                  fontSize: "11px",
+                  backgroundColor: "hsl(var(--card))",
+                }}
+                formatter={(value: number) => [`${value}%`]}
+              />
+              {centersData.map((center, i) => (
+                <Line
+                  key={center.id}
+                  type="monotone"
+                  dataKey={center.name.replace("AWC ", "")}
+                  stroke={radarColors[i]}
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: radarColors[i], stroke: "hsl(var(--card))", strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+              ))}
+              <Legend
+                wrapperStyle={{ fontSize: "10px" }}
+                formatter={(value: string) => <span className="text-muted-foreground">{value}</span>}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
       {/* Nutrition Status Bar Chart */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="stat-card mb-6">
         <h3 className="section-title mb-3">{tl("barTitle")}</h3>
