@@ -127,7 +127,7 @@ const getVaccineStatus = (vaccine: Vaccine, dob: string, completed: string[]) =>
 const SupervisorDashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
-  const [activeSection, setActiveSection] = useState<"overview" | "stock" | "vaccine" | "development" | "visits">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "workers" | "stock" | "vaccine" | "development" | "visits">("overview");
 
   // Stock data from localStorage or defaults
   const stock: StockItem[] = useMemo(() => {
