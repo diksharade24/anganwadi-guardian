@@ -318,7 +318,7 @@ const SupervisorDashboard = () => {
                 : "bg-secondary text-muted-foreground"
             }`}
           >
-            {t(s.labelKey)}
+            {'label' in s ? s.label : t((s as any).labelKey)}
           </button>
         ))}
       </div>
