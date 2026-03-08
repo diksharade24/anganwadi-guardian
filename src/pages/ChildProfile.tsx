@@ -12,8 +12,10 @@ import {
   AlertTriangle,
   Syringe,
   Baby,
+  BarChart3,
 } from "lucide-react";
 import { RiskGauge, StatusBadge } from "@/components/HealthWidgets";
+import WHOGrowthChart from "@/components/WHOGrowthChart";
 import {
   Line,
   XAxis,
