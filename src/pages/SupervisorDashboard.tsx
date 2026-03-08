@@ -18,10 +18,13 @@ import {
   Navigation,
   MapPin,
   BarChart3,
+  UserCheck,
+  Star,
 } from "lucide-react";
 import { StatCard, StatusBadge } from "@/components/HealthWidgets";
 import { exportToPDF } from "@/lib/pdfExport";
 import { useLanguage, type TranslationKey } from "@/contexts/LanguageContext";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 
 // ─── Stock data (mirrors NutritionStock) ──────────────────────
 interface StockItem {
@@ -127,7 +130,7 @@ const getVaccineStatus = (vaccine: Vaccine, dob: string, completed: string[]) =>
 const SupervisorDashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
-  const [activeSection, setActiveSection] = useState<"overview" | "stock" | "vaccine" | "development" | "visits">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "workers" | "stock" | "vaccine" | "development" | "visits">("overview");
 
   // Stock data from localStorage or defaults
   const stock: StockItem[] = useMemo(() => {
@@ -208,14 +211,6 @@ const SupervisorDashboard = () => {
     `);
   };
 
-  const sections = [
-    { key: "overview" as const, labelKey: "summary" as TranslationKey },
-    { key: "stock" as const, labelKey: "stock" as TranslationKey },
-    { key: "vaccine" as const, labelKey: "vaccines" as TranslationKey },
-    { key: "development" as const, labelKey: "development" as TranslationKey },
-    { key: "visits" as const, labelKey: "navVisits" as TranslationKey },
-  ];
-
   const sectionLabels: Record<string, Record<string, string>> = {
     supervisorDashboard: { en: "Supervisor Dashboard", hi: "पर्यवेक्षक डैशबोर्ड", mr: "पर्यवेक्षक डॅशबोर्ड" },
     centerOverview: { en: "Center Overview & Analytics", hi: "केंद्र अवलोकन और विश्लेषण", mr: "केंद्र आढावा आणि विश्लेषण" },
@@ -235,9 +230,61 @@ const SupervisorDashboard = () => {
     distanceCovered: { en: "Distance Covered", hi: "तय दूरी", mr: "अंतर कापले" },
     workerVisitStats: { en: "Worker Visit Summary", hi: "कार्यकर्ता विजिट सारांश", mr: "कर्मचारी भेट सारांश" },
     householdsNeedFollowUp: { en: "Households Needing Follow-up", hi: "अनुसरण आवश्यक घर", mr: "अनुसरण आवश्यक घरे" },
+    workerTrends: { en: "Worker Trends", hi: "कार्यकर्ता रुझान", mr: "कर्मचारी ट्रेंड" },
+    areaPerformance: { en: "Area-wise Performance", hi: "क्षेत्र-वार प्रदर्शन", mr: "क्षेत्रनिहाय कामगिरी" },
+    attendanceRate: { en: "Attendance Rate", hi: "उपस्थिति दर", mr: "उपस्थिती दर" },
+    visitsCompleted: { en: "Visits Done", hi: "विजिट पूर्ण", mr: "भेटी पूर्ण" },
+    overallScore: { en: "Overall Score", hi: "कुल स्कोर", mr: "एकूण स्कोर" },
+    monthlyTrend: { en: "Monthly Trend (6 months)", hi: "मासिक रुझान (6 महीने)", mr: "मासिक ट्रेंड (6 महिने)" },
+    topPerformers: { en: "Top Performers", hi: "शीर्ष प्रदर्शक", mr: "सर्वोत्तम कामगिरी" },
+    needsImprovement: { en: "Needs Improvement", hi: "सुधार आवश्यक", mr: "सुधारणा आवश्यक" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
+
+  const sections = [
+    { key: "overview" as const, labelKey: "summary" as TranslationKey },
+    { key: "workers" as const, label: tl("workerTrends") },
+    { key: "stock" as const, labelKey: "stock" as TranslationKey },
+    { key: "vaccine" as const, labelKey: "vaccines" as TranslationKey },
+    { key: "development" as const, labelKey: "development" as TranslationKey },
+    { key: "visits" as const, labelKey: "navVisits" as TranslationKey },
+  ];
+
+  // ─── Worker trends mock data ─────────────────────────────
+  const workersByArea = useMemo(() => [
+    { area: "Rampur", workers: [
+      { name: "Sunita Devi", attendance: 94, visits: 42, vaccineRate: 88, score: 91, trend: "up" },
+      { name: "Geeta Kumari", attendance: 87, visits: 35, vaccineRate: 82, score: 84, trend: "stable" },
+    ]},
+    { area: "Sundarpur", workers: [
+      { name: "Kavita Singh", attendance: 78, visits: 28, vaccineRate: 75, score: 72, trend: "down" },
+      { name: "Rani Yadav", attendance: 91, visits: 38, vaccineRate: 90, score: 89, trend: "up" },
+    ]},
+    { area: "Keshavpur", workers: [
+      { name: "Meena Sharma", attendance: 82, visits: 30, vaccineRate: 70, score: 76, trend: "stable" },
+      { name: "Pooja Gupta", attendance: 69, visits: 22, vaccineRate: 65, score: 63, trend: "down" },
+    ]},
+    { area: "Laxmipur", workers: [
+      { name: "Sarita Devi", attendance: 96, visits: 45, vaccineRate: 92, score: 94, trend: "up" },
+    ]},
+  ], []);
+
+  const monthlyTrendData = useMemo(() => [
+    { month: lang === "hi" ? "अक्टू" : lang === "mr" ? "ऑक्टो" : "Oct", Rampur: 82, Sundarpur: 74, Keshavpur: 70, Laxmipur: 88 },
+    { month: lang === "hi" ? "नवं" : lang === "mr" ? "नोव्हें" : "Nov", Rampur: 85, Sundarpur: 76, Keshavpur: 72, Laxmipur: 90 },
+    { month: lang === "hi" ? "दिसं" : lang === "mr" ? "डिसें" : "Dec", Rampur: 83, Sundarpur: 78, Keshavpur: 68, Laxmipur: 91 },
+    { month: lang === "hi" ? "जन" : lang === "mr" ? "जाने" : "Jan", Rampur: 87, Sundarpur: 80, Keshavpur: 74, Laxmipur: 93 },
+    { month: lang === "hi" ? "फर" : lang === "mr" ? "फेब्रु" : "Feb", Rampur: 88, Sundarpur: 77, Keshavpur: 73, Laxmipur: 94 },
+    { month: lang === "hi" ? "मार्च" : lang === "mr" ? "मार्च" : "Mar", Rampur: 88, Sundarpur: 79, Keshavpur: 70, Laxmipur: 95 },
+  ], [lang]);
+
+  const areaBarData = useMemo(() => workersByArea.map(a => {
+    const avgAtt = Math.round(a.workers.reduce((s, w) => s + w.attendance, 0) / a.workers.length);
+    const avgVisits = Math.round(a.workers.reduce((s, w) => s + w.visits, 0) / a.workers.length);
+    const avgScore = Math.round(a.workers.reduce((s, w) => s + w.score, 0) / a.workers.length);
+    return { area: a.area, [tl("attendanceRate")]: avgAtt, [tl("overallScore")]: avgScore };
+  }), [workersByArea]);
 
   return (
     <div className="page-container">
@@ -271,7 +318,7 @@ const SupervisorDashboard = () => {
                 : "bg-secondary text-muted-foreground"
             }`}
           >
-            {t(s.labelKey)}
+            {'label' in s ? s.label : t((s as any).labelKey)}
           </button>
         ))}
       </div>
@@ -353,7 +400,117 @@ const SupervisorDashboard = () => {
         </div>
       )}
 
-      {/* ─── STOCK DETAIL ─────────────────────────────────── */}
+      {/* ─── WORKER TRENDS ─────────────────────────────────── */}
+      {activeSection === "workers" && (
+        <div className="space-y-5">
+          {/* Area-wise bar chart */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-primary" /> {tl("areaPerformance")}
+            </h3>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={areaBarData} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="area" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12 }} />
+                  <Bar dataKey={tl("attendanceRate")} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey={tl("overallScore")} fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex gap-4 mt-2 justify-center">
+              <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><span className="w-2.5 h-2.5 rounded-sm bg-primary" /> {tl("attendanceRate")}</span>
+              <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><span className="w-2.5 h-2.5 rounded-sm bg-accent" /> {tl("overallScore")}</span>
+            </div>
+          </motion.div>
+
+          {/* Monthly trend line chart */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="stat-card">
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-accent" /> {tl("monthlyTrend")}
+            </h3>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} domain={[50, 100]} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12 }} />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                  <Line type="monotone" dataKey="Rampur" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="Sundarpur" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="Keshavpur" stroke="hsl(var(--health-risk))" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="Laxmipur" stroke="hsl(var(--health-normal))" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
+          {/* Workers by area cards */}
+          {workersByArea.map((area, ai) => (
+            <motion.div
+              key={area.area}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 + ai * 0.05 }}
+            >
+              <h3 className="section-title flex items-center gap-2 mb-2">
+                <MapPin className="w-3.5 h-3.5" /> {area.area}
+              </h3>
+              <div className="space-y-2">
+                {area.workers.map((w, wi) => (
+                  <motion.div
+                    key={w.name}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + ai * 0.05 + wi * 0.03 }}
+                    className="stat-card"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        w.score >= 85 ? "bg-health-normal-bg" : w.score >= 70 ? "bg-health-risk-bg" : "bg-health-severe-bg"
+                      }`}>
+                        <UserCheck className={`w-4 h-4 ${
+                          w.score >= 85 ? "text-health-normal" : w.score >= 70 ? "text-health-risk" : "text-health-severe"
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold">{w.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{tl("overallScore")}: {w.score}%</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {w.trend === "up" && <TrendingUp className="w-3.5 h-3.5 text-health-normal" />}
+                        {w.trend === "down" && <TrendingUp className="w-3.5 h-3.5 text-health-severe rotate-180" />}
+                        {w.trend === "stable" && <Activity className="w-3.5 h-3.5 text-muted-foreground" />}
+                        <StatusBadge status={w.score >= 85 ? "normal" : w.score >= 70 ? "risk" : "severe"}>
+                          {w.score >= 85 ? "★" : w.score >= 70 ? "▬" : "▼"} {w.score}%
+                        </StatusBadge>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center p-1.5 rounded-lg bg-secondary">
+                        <p className="text-xs font-bold">{w.attendance}%</p>
+                        <p className="text-[9px] text-muted-foreground">{tl("attendanceRate")}</p>
+                      </div>
+                      <div className="text-center p-1.5 rounded-lg bg-secondary">
+                        <p className="text-xs font-bold">{w.visits}</p>
+                        <p className="text-[9px] text-muted-foreground">{tl("visitsCompleted")}</p>
+                      </div>
+                      <div className="text-center p-1.5 rounded-lg bg-secondary">
+                        <p className="text-xs font-bold">{w.vaccineRate}%</p>
+                        <p className="text-[9px] text-muted-foreground">{t("vaccines")}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
       {activeSection === "stock" && (
         <div className="space-y-3">
           {stock.map((item, i) => {
