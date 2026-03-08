@@ -18,6 +18,7 @@ import NutritionStock from "./pages/NutritionStock";
 import AddChild from "./pages/AddChild";
 import VaccineTracker from "./pages/VaccineTracker";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
+import CenterComparison from "./pages/CenterComparison";
 import VisitTracking from "./pages/VisitTracking";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
