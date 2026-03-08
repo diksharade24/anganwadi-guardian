@@ -18,10 +18,13 @@ import {
   Navigation,
   MapPin,
   BarChart3,
+  UserCheck,
+  Star,
 } from "lucide-react";
 import { StatCard, StatusBadge } from "@/components/HealthWidgets";
 import { exportToPDF } from "@/lib/pdfExport";
 import { useLanguage, type TranslationKey } from "@/contexts/LanguageContext";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 
 // ─── Stock data (mirrors NutritionStock) ──────────────────────
 interface StockItem {
