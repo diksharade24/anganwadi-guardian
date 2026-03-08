@@ -186,7 +186,6 @@ const translations = {
   markDone: { en: "Mark done", hi: "पूर्ण करें", mr: "पूर्ण करा" },
   choose: { en: "Choose...", hi: "चुनें...", mr: "निवडा..." },
   supervisor: { en: "Supervisor", hi: "पर्यवेक्षक", mr: "पर्यवेक्षक" },
-  navVisits: { en: "Visits", hi: "विजिट", mr: "भेटी" },
   visitTracking: { en: "Visit Tracking", hi: "विजिट ट्रैकिंग", mr: "भेट ट्रॅकिंग" },
 
   // Attendance History
