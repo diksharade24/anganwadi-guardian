@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Ruler, Weight, Plus, X, Calendar, Check } from "lucide-react";
+import { Ruler, Weight, Plus, X, Calendar, Check, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -523,7 +523,19 @@ const WHOGrowthChart = ({ childId, childAgeMonths }: WHOGrowthChartProps) => {
           {[...childData].reverse().map((m, i) => (
             <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-secondary/50 text-xs">
               <span className="text-muted-foreground">{m.month} months</span>
-              <span className="font-semibold">{m.value} {unit}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">{m.value} {unit}</span>
+                <button
+                  onClick={() => {
+                    const setter = chartType === "weight" ? setWeightData : setHeightData;
+                    setter((prev) => prev.filter((p) => p.month !== m.month));
+                    toast.success(fl.saved);
+                  }}
+                  className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
