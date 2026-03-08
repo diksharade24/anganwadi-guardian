@@ -400,7 +400,117 @@ const SupervisorDashboard = () => {
         </div>
       )}
 
-      {/* ─── STOCK DETAIL ─────────────────────────────────── */}
+      {/* ─── WORKER TRENDS ─────────────────────────────────── */}
+      {activeSection === "workers" && (
+        <div className="space-y-5">
+          {/* Area-wise bar chart */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-primary" /> {tl("areaPerformance")}
+            </h3>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={areaBarData} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="area" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12 }} />
+                  <Bar dataKey={tl("attendanceRate")} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey={tl("overallScore")} fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex gap-4 mt-2 justify-center">
+              <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><span className="w-2.5 h-2.5 rounded-sm bg-primary" /> {tl("attendanceRate")}</span>
+              <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><span className="w-2.5 h-2.5 rounded-sm bg-accent" /> {tl("overallScore")}</span>
+            </div>
+          </motion.div>
+
+          {/* Monthly trend line chart */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="stat-card">
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-accent" /> {tl("monthlyTrend")}
+            </h3>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} domain={[50, 100]} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12 }} />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                  <Line type="monotone" dataKey="Rampur" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="Sundarpur" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="Keshavpur" stroke="hsl(var(--health-risk))" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="Laxmipur" stroke="hsl(var(--health-normal))" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
+          {/* Workers by area cards */}
+          {workersByArea.map((area, ai) => (
+            <motion.div
+              key={area.area}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 + ai * 0.05 }}
+            >
+              <h3 className="section-title flex items-center gap-2 mb-2">
+                <MapPin className="w-3.5 h-3.5" /> {area.area}
+              </h3>
+              <div className="space-y-2">
+                {area.workers.map((w, wi) => (
+                  <motion.div
+                    key={w.name}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + ai * 0.05 + wi * 0.03 }}
+                    className="stat-card"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        w.score >= 85 ? "bg-health-normal-bg" : w.score >= 70 ? "bg-health-risk-bg" : "bg-health-severe-bg"
+                      }`}>
+                        <UserCheck className={`w-4 h-4 ${
+                          w.score >= 85 ? "text-health-normal" : w.score >= 70 ? "text-health-risk" : "text-health-severe"
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold">{w.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{tl("overallScore")}: {w.score}%</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {w.trend === "up" && <TrendingUp className="w-3.5 h-3.5 text-health-normal" />}
+                        {w.trend === "down" && <TrendingUp className="w-3.5 h-3.5 text-health-severe rotate-180" />}
+                        {w.trend === "stable" && <Activity className="w-3.5 h-3.5 text-muted-foreground" />}
+                        <StatusBadge status={w.score >= 85 ? "normal" : w.score >= 70 ? "risk" : "severe"}>
+                          {w.score >= 85 ? "★" : w.score >= 70 ? "▬" : "▼"} {w.score}%
+                        </StatusBadge>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center p-1.5 rounded-lg bg-secondary">
+                        <p className="text-xs font-bold">{w.attendance}%</p>
+                        <p className="text-[9px] text-muted-foreground">{tl("attendanceRate")}</p>
+                      </div>
+                      <div className="text-center p-1.5 rounded-lg bg-secondary">
+                        <p className="text-xs font-bold">{w.visits}</p>
+                        <p className="text-[9px] text-muted-foreground">{tl("visitsCompleted")}</p>
+                      </div>
+                      <div className="text-center p-1.5 rounded-lg bg-secondary">
+                        <p className="text-xs font-bold">{w.vaccineRate}%</p>
+                        <p className="text-[9px] text-muted-foreground">{t("vaccines")}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
       {activeSection === "stock" && (
         <div className="space-y-3">
           {stock.map((item, i) => {
