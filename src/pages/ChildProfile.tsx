@@ -12,8 +12,10 @@ import {
   AlertTriangle,
   Syringe,
   Baby,
+  BarChart3,
 } from "lucide-react";
 import { RiskGauge, StatusBadge } from "@/components/HealthWidgets";
+import WHOGrowthChart from "@/components/WHOGrowthChart";
 import {
   Line,
   XAxis,
@@ -67,13 +69,14 @@ const nutritionTips: Record<string, string[]> = {
 const ChildProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [activeTab, setActiveTab] = useState<"health" | "vaccines" | "development">("health");
+  const [activeTab, setActiveTab] = useState<"health" | "growth" | "vaccines" | "development">("health");
   const { lang, t } = useLanguage();
 
   const childAgeMonths = 28;
 
   const tabs = [
     { key: "health" as const, labelKey: "health" as const, icon: TrendingUp },
+    { key: "growth" as const, labelKey: "growthCharts" as const, icon: BarChart3 },
     { key: "vaccines" as const, labelKey: "vaccines" as const, icon: Syringe },
     { key: "development" as const, labelKey: "development" as const, icon: Baby },
   ];
@@ -237,6 +240,12 @@ const ChildProfile = () => {
             </div>
           </motion.div>
         </>
+      )}
+
+      {activeTab === "growth" && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <WHOGrowthChart childId={id || "1"} childAgeMonths={childAgeMonths} />
+        </motion.div>
       )}
 
       {activeTab === "vaccines" && (

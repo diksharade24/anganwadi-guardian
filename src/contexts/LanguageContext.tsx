@@ -125,6 +125,7 @@ const translations = {
   dropoutRisk: { en: "Dropout Risk", hi: "ड्रॉपआउट जोखिम", mr: "गळती धोका" },
   flagged: { en: "Flagged", hi: "चिन्हित", mr: "चिन्हांकित" },
   moderate: { en: "Moderate", hi: "मध्यम", mr: "मध्यम" },
+  growthCharts: { en: "Growth Charts", hi: "विकास चार्ट", mr: "वाढ तक्ते" },
   growthPrediction: { en: "6-Month Growth Prediction", hi: "6 माह विकास पूर्वानुमान", mr: "6 महिने वाढ अंदाज" },
   actualWeight: { en: "Actual Weight", hi: "वास्तविक वजन", mr: "प्रत्यक्ष वजन" },
   aiPredicted: { en: "AI Predicted", hi: "AI पूर्वानुमान", mr: "AI अंदाज" },
