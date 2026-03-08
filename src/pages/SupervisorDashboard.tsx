@@ -17,6 +17,7 @@ import {
   Activity,
   Navigation,
   MapPin,
+  BarChart3,
 } from "lucide-react";
 import { StatCard, StatusBadge } from "@/components/HealthWidgets";
 import { exportToPDF } from "@/lib/pdfExport";
