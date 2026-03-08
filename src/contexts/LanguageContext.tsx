@@ -29,6 +29,7 @@ const translations = {
   navVoice: { en: "Voice", hi: "आवाज़", mr: "आवाज" },
   navSupervisor: { en: "Supervisor", hi: "पर्यवेक्षक", mr: "पर्यवेक्षक" },
   navVisits: { en: "Visits", hi: "विजिट", mr: "भेटी" },
+  navSupplies: { en: "Supplies", hi: "आपूर्ति", mr: "पुरवठा" },
 
   // Dashboard
   greeting: { en: "Good Morning, Sunita 👋", hi: "सुप्रभात, सुनीता 👋", mr: "सुप्रभात, सुनीता 👋" },
