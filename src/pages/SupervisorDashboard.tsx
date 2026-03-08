@@ -517,10 +517,10 @@ const SupervisorDashboard = () => {
                   <YAxis tick={{ fontSize: 10 }} domain={[50, 100]} />
                   <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12 }} />
                   <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                  <Line type="monotone" dataKey="Rampur" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="Sundarpur" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="Keshavpur" stroke="hsl(var(--health-risk))" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="Laxmipur" stroke="hsl(var(--health-normal))" strokeWidth={2} dot={{ r: 3 }} />
+                  {visibleAreaNames.includes("Rampur") && <Line type="monotone" dataKey="Rampur" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />}
+                  {visibleAreaNames.includes("Sundarpur") && <Line type="monotone" dataKey="Sundarpur" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} />}
+                  {visibleAreaNames.includes("Keshavpur") && <Line type="monotone" dataKey="Keshavpur" stroke="hsl(var(--health-risk))" strokeWidth={2} dot={{ r: 3 }} />}
+                  {visibleAreaNames.includes("Laxmipur") && <Line type="monotone" dataKey="Laxmipur" stroke="hsl(var(--health-normal))" strokeWidth={2} dot={{ r: 3 }} />}
                 </LineChart>
               </ResponsiveContainer>
             </div>
