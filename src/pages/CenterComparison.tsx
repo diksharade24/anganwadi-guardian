@@ -125,6 +125,11 @@ const labels: Record<string, Record<string, string>> = {
     improving: "Improving",
     declining: "Declining",
     stable: "Stable",
+    trendTitle: "6-Month Trends",
+    trendOverall: "Overall Score",
+    trendVaccine: "Vaccine Coverage",
+    trendMalnutrition: "Malnutrition Rate",
+    trendAttendance: "Attendance Rate",
   },
   hi: {
     title: "केंद्र तुलना",
