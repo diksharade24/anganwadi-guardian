@@ -18,6 +18,7 @@ import NutritionStock from "./pages/NutritionStock";
 import AddChild from "./pages/AddChild";
 import VaccineTracker from "./pages/VaccineTracker";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
+import CenterComparison from "./pages/CenterComparison";
 import VisitTracking from "./pages/VisitTracking";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/nutrition" element={<Layout><NutritionStock /></Layout>} />
             <Route path="/vaccines" element={<Layout><VaccineTracker /></Layout>} />
             <Route path="/supervisor" element={<Layout><SupervisorDashboard /></Layout>} />
+            <Route path="/compare" element={<Layout><CenterComparison /></Layout>} />
             <Route path="/visits" element={<Layout><VisitTracking /></Layout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
