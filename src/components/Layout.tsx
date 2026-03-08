@@ -12,6 +12,7 @@ import {
   Wifi,
   WifiOff,
   Globe,
+  LogOut,
 } from "lucide-react";
 import { useLanguage, languageLabels, Language } from "@/contexts/LanguageContext";
 
