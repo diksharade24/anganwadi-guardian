@@ -335,6 +335,20 @@ const SupervisorDashboard = () => {
               </motion.button>
             ))}
           </div>
+
+          {/* Compare Centers Button */}
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/compare")}
+            className="w-full py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent font-semibold text-sm flex items-center justify-center gap-2"
+          >
+            <BarChart3 className="w-4 h-4" />
+            {lang === "hi" ? "केंद्रों की तुलना करें" : lang === "mr" ? "केंद्रांची तुलना करा" : "Compare Centers"}
+            <ChevronRight className="w-4 h-4" />
+          </motion.button>
         </div>
       )}
 
