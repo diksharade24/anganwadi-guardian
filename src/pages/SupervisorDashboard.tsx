@@ -279,21 +279,38 @@ const SupervisorDashboard = () => {
     ]},
   ], []);
 
-  const monthlyTrendData = useMemo(() => [
-    { month: lang === "hi" ? "अक्टू" : lang === "mr" ? "ऑक्टो" : "Oct", Rampur: 82, Sundarpur: 74, Keshavpur: 70, Laxmipur: 88 },
-    { month: lang === "hi" ? "नवं" : lang === "mr" ? "नोव्हें" : "Nov", Rampur: 85, Sundarpur: 76, Keshavpur: 72, Laxmipur: 90 },
-    { month: lang === "hi" ? "दिसं" : lang === "mr" ? "डिसें" : "Dec", Rampur: 83, Sundarpur: 78, Keshavpur: 68, Laxmipur: 91 },
-    { month: lang === "hi" ? "जन" : lang === "mr" ? "जाने" : "Jan", Rampur: 87, Sundarpur: 80, Keshavpur: 74, Laxmipur: 93 },
-    { month: lang === "hi" ? "फर" : lang === "mr" ? "फेब्रु" : "Feb", Rampur: 88, Sundarpur: 77, Keshavpur: 73, Laxmipur: 94 },
-    { month: lang === "hi" ? "मार्च" : lang === "mr" ? "मार्च" : "Mar", Rampur: 88, Sundarpur: 79, Keshavpur: 70, Laxmipur: 95 },
+  const allMonthlyData = useMemo(() => [
+    { month: lang === "hi" ? "अप्रैल" : lang === "mr" ? "एप्रिल" : "Apr", Rampur: 78, Sundarpur: 70, Keshavpur: 66, Laxmipur: 84, idx: 0 },
+    { month: lang === "hi" ? "मई" : lang === "mr" ? "मे" : "May", Rampur: 79, Sundarpur: 71, Keshavpur: 67, Laxmipur: 85, idx: 1 },
+    { month: lang === "hi" ? "जून" : lang === "mr" ? "जून" : "Jun", Rampur: 80, Sundarpur: 72, Keshavpur: 68, Laxmipur: 86, idx: 2 },
+    { month: lang === "hi" ? "जुलाई" : lang === "mr" ? "जुलै" : "Jul", Rampur: 80, Sundarpur: 73, Keshavpur: 67, Laxmipur: 87, idx: 3 },
+    { month: lang === "hi" ? "अगस्त" : lang === "mr" ? "ऑगस्ट" : "Aug", Rampur: 81, Sundarpur: 73, Keshavpur: 69, Laxmipur: 87, idx: 4 },
+    { month: lang === "hi" ? "सितंबर" : lang === "mr" ? "सप्टें" : "Sep", Rampur: 81, Sundarpur: 74, Keshavpur: 69, Laxmipur: 88, idx: 5 },
+    { month: lang === "hi" ? "अक्टू" : lang === "mr" ? "ऑक्टो" : "Oct", Rampur: 82, Sundarpur: 74, Keshavpur: 70, Laxmipur: 88, idx: 6 },
+    { month: lang === "hi" ? "नवं" : lang === "mr" ? "नोव्हें" : "Nov", Rampur: 85, Sundarpur: 76, Keshavpur: 72, Laxmipur: 90, idx: 7 },
+    { month: lang === "hi" ? "दिसं" : lang === "mr" ? "डिसें" : "Dec", Rampur: 83, Sundarpur: 78, Keshavpur: 68, Laxmipur: 91, idx: 8 },
+    { month: lang === "hi" ? "जन" : lang === "mr" ? "जाने" : "Jan", Rampur: 87, Sundarpur: 80, Keshavpur: 74, Laxmipur: 93, idx: 9 },
+    { month: lang === "hi" ? "फर" : lang === "mr" ? "फेब्रु" : "Feb", Rampur: 88, Sundarpur: 77, Keshavpur: 73, Laxmipur: 94, idx: 10 },
+    { month: lang === "hi" ? "मार्च" : lang === "mr" ? "मार्च" : "Mar", Rampur: 88, Sundarpur: 79, Keshavpur: 70, Laxmipur: 95, idx: 11 },
   ], [lang]);
 
-  const areaBarData = useMemo(() => workersByArea.map(a => {
+  const monthlyTrendData = useMemo(() => {
+    const count = workerTimeFilter === "3m" ? 3 : workerTimeFilter === "6m" ? 6 : 12;
+    return allMonthlyData.slice(-count);
+  }, [allMonthlyData, workerTimeFilter]);
+
+  const filteredAreas = useMemo(() => 
+    workerAreaFilter === "all" ? workersByArea : workersByArea.filter(a => a.area === workerAreaFilter)
+  , [workersByArea, workerAreaFilter]);
+
+  const areaBarData = useMemo(() => filteredAreas.map(a => {
     const avgAtt = Math.round(a.workers.reduce((s, w) => s + w.attendance, 0) / a.workers.length);
-    const avgVisits = Math.round(a.workers.reduce((s, w) => s + w.visits, 0) / a.workers.length);
     const avgScore = Math.round(a.workers.reduce((s, w) => s + w.score, 0) / a.workers.length);
     return { area: a.area, [tl("attendanceRate")]: avgAtt, [tl("overallScore")]: avgScore };
-  }), [workersByArea]);
+  }), [filteredAreas]);
+
+  const areaNames = useMemo(() => workersByArea.map(a => a.area), [workersByArea]);
+  const visibleAreaNames = useMemo(() => filteredAreas.map(a => a.area), [filteredAreas]);
 
   return (
     <div className="page-container">
