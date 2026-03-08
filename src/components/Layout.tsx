@@ -12,6 +12,7 @@ import {
   Wifi,
   WifiOff,
   Globe,
+  LogOut,
 } from "lucide-react";
 import { useLanguage, languageLabels, Language } from "@/contexts/LanguageContext";
 
@@ -71,6 +72,15 @@ const Layout = ({ children }: LayoutProps) => {
               {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
               {isOnline ? t("online") : t("offline")}
             </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem("isLoggedIn");
+                navigate("/login");
+              }}
+              className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+            >
+              <LogOut className="w-3 h-3" />
+            </button>
           </div>
         </div>
       </header>
