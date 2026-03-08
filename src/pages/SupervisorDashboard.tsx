@@ -242,6 +242,11 @@ const SupervisorDashboard = () => {
     monthlyTrend: { en: "Monthly Trend (6 months)", hi: "मासिक रुझान (6 महीने)", mr: "मासिक ट्रेंड (6 महिने)" },
     topPerformers: { en: "Top Performers", hi: "शीर्ष प्रदर्शक", mr: "सर्वोत्तम कामगिरी" },
     needsImprovement: { en: "Needs Improvement", hi: "सुधार आवश्यक", mr: "सुधारणा आवश्यक" },
+    allAreas: { en: "All Areas", hi: "सभी क्षेत्र", mr: "सर्व क्षेत्रे" },
+    timePeriod: { en: "Period", hi: "अवधि", mr: "कालावधी" },
+    threeMonths: { en: "3 Months", hi: "3 महीने", mr: "3 महिने" },
+    sixMonths: { en: "6 Months", hi: "6 महीने", mr: "6 महिने" },
+    twelveMonths: { en: "12 Months", hi: "12 महीने", mr: "12 महिने" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
