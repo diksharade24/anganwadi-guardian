@@ -210,6 +210,7 @@ const SupervisorDashboard = () => {
 
   const sections = [
     { key: "overview" as const, labelKey: "summary" as TranslationKey },
+    { key: "workers" as const, labelKey: "children" as TranslationKey },
     { key: "stock" as const, labelKey: "stock" as TranslationKey },
     { key: "vaccine" as const, labelKey: "vaccines" as TranslationKey },
     { key: "development" as const, labelKey: "development" as TranslationKey },
