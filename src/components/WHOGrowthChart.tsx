@@ -1,18 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AreaChart,
   Area,
-  LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
 } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Ruler, Weight } from "lucide-react";
+import { Ruler, Weight, Plus, X, Calendar, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 // WHO Weight-for-Age z-score reference data (boys, 0-60 months, simplified)
 const whoWeightForAge = [
@@ -56,8 +56,8 @@ const whoHeightForAge = [
   { month: 60, neg3: 96.1, neg2: 100.7, neg1: 105.3, median: 109.9, pos1: 114.5, pos2: 119.1, pos3: 123.7 },
 ];
 
-// Mock child measurement data
-const childWeightData = [
+// Default mock data
+const defaultWeightData = [
   { month: 0, value: 3.2 },
   { month: 3, value: 5.8 },
   { month: 6, value: 7.2 },
@@ -71,7 +71,7 @@ const childWeightData = [
   { month: 28, value: 8.3 },
 ];
 
-const childHeightData = [
+const defaultHeightData = [
   { month: 0, value: 49.0 },
   { month: 3, value: 59.5 },
   { month: 6, value: 65.0 },
@@ -84,6 +84,11 @@ const childHeightData = [
   { month: 27, value: 84.8 },
   { month: 28, value: 85.2 },
 ];
+
+interface Measurement {
+  month: number;
+  value: number;
+}
 
 interface WHOGrowthChartProps {
   childId: string;
@@ -104,33 +109,168 @@ const zLabels: Record<string, Record<string, string>> = {
   mr: { median: "मध्यमान", neg2: "कमी वजन (-2 SD)", neg3: "अत्यंत कमी वजन (-3 SD)", pos2: "+2 SD", pos3: "+3 SD" },
 };
 
+const formLabels: Record<string, Record<string, string>> = {
+  en: {
+    addMeasurement: "Add Measurement",
+    ageMonths: "Age (months)",
+    weightKg: "Weight (kg)",
+    heightCm: "Height (cm)",
+    save: "Save",
+    cancel: "Cancel",
+    saved: "Measurement saved!",
+    invalidAge: "Age must be 0-60 months",
+    invalidWeight: "Weight must be 0.5-30 kg",
+    invalidHeight: "Height must be 30-130 cm",
+    duplicate: "A measurement for this month already exists. It will be updated.",
+    measurementHistory: "Measurement History",
+  },
+  hi: {
+    addMeasurement: "माप जोड़ें",
+    ageMonths: "आयु (महीने)",
+    weightKg: "वजन (किग्रा)",
+    heightCm: "ऊंचाई (सेमी)",
+    save: "सहेजें",
+    cancel: "रद्द करें",
+    saved: "माप सहेजा गया!",
+    invalidAge: "आयु 0-60 महीने होनी चाहिए",
+    invalidWeight: "वजन 0.5-30 किग्रा होना चाहिए",
+    invalidHeight: "ऊंचाई 30-130 सेमी होनी चाहिए",
+    duplicate: "इस महीने का माप पहले से मौजूद है। यह अपडेट किया जाएगा।",
+    measurementHistory: "माप इतिहास",
+  },
+  mr: {
+    addMeasurement: "मापन जोडा",
+    ageMonths: "वय (महिने)",
+    weightKg: "वजन (किग्रॅ)",
+    heightCm: "उंची (सेमी)",
+    save: "जतन करा",
+    cancel: "रद्द करा",
+    saved: "मापन जतन केले!",
+    invalidAge: "वय 0-60 महिने असावे",
+    invalidWeight: "वजन 0.5-30 किग्रॅ असावे",
+    invalidHeight: "उंची 30-130 सेमी असावी",
+    duplicate: "या महिन्याचे मापन आधीपासून आहे. ते अपडेट केले जाईल.",
+    measurementHistory: "मापन इतिहास",
+  },
+};
+
+const getStorageKey = (childId: string, type: ChartType) =>
+  `growth_${type}_${childId}`;
+
 const WHOGrowthChart = ({ childId, childAgeMonths }: WHOGrowthChartProps) => {
   const [chartType, setChartType] = useState<ChartType>("weight");
+  const [showForm, setShowForm] = useState(false);
+  const [ageInput, setAgeInput] = useState(childAgeMonths.toString());
+  const [valueInput, setValueInput] = useState("");
+  const [errors, setErrors] = useState<string[]>([]);
   const { lang } = useLanguage();
+  const fl = formLabels[lang] || formLabels.en;
+
+  // Load measurements from localStorage, falling back to defaults
+  const [weightData, setWeightData] = useState<Measurement[]>(() => {
+    const stored = localStorage.getItem(getStorageKey(childId, "weight"));
+    return stored ? JSON.parse(stored) : defaultWeightData;
+  });
+  const [heightData, setHeightData] = useState<Measurement[]>(() => {
+    const stored = localStorage.getItem(getStorageKey(childId, "height"));
+    return stored ? JSON.parse(stored) : defaultHeightData;
+  });
+
+  // Persist to localStorage
+  useEffect(() => {
+    localStorage.setItem(getStorageKey(childId, "weight"), JSON.stringify(weightData));
+  }, [weightData, childId]);
+  useEffect(() => {
+    localStorage.setItem(getStorageKey(childId, "height"), JSON.stringify(heightData));
+  }, [heightData, childId]);
 
   const whoData = chartType === "weight" ? whoWeightForAge : whoHeightForAge;
-  const childData = chartType === "weight" ? childWeightData : childHeightData;
+  const childData = chartType === "weight" ? weightData : heightData;
   const labels = chartLabels[lang] || chartLabels.en;
   const zLabel = zLabels[lang] || zLabels.en;
   const unit = chartType === "weight" ? "kg" : "cm";
 
+  const handleAddMeasurement = () => {
+    const age = parseInt(ageInput, 10);
+    const val = parseFloat(valueInput);
+    const newErrors: string[] = [];
+
+    if (isNaN(age) || age < 0 || age > 60) newErrors.push(fl.invalidAge);
+    if (chartType === "weight" && (isNaN(val) || val < 0.5 || val > 30)) newErrors.push(fl.invalidWeight);
+    if (chartType === "height" && (isNaN(val) || val < 30 || val > 130)) newErrors.push(fl.invalidHeight);
+
+    if (newErrors.length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const setter = chartType === "weight" ? setWeightData : setHeightData;
+    setter((prev) => {
+      const filtered = prev.filter((m) => m.month !== age);
+      const updated = [...filtered, { month: age, value: val }].sort((a, b) => a.month - b.month);
+      return updated;
+    });
+
+    toast.success(fl.saved);
+    setShowForm(false);
+    setValueInput("");
+    setErrors([]);
+  };
+
   // Merge WHO reference with child data
-  const mergedData = whoData
-    .filter((d) => d.month <= Math.max(childAgeMonths + 6, 36))
-    .map((who) => {
-      const measurement = childData.find((c) => c.month === who.month);
+  const allMonths = new Set([
+    ...whoData.filter((d) => d.month <= Math.max(childAgeMonths + 6, 36)).map((d) => d.month),
+    ...childData.map((d) => d.month),
+  ]);
+  const mergedData = Array.from(allMonths)
+    .sort((a, b) => a - b)
+    .map((month) => {
+      const who = whoData.find((w) => w.month === month);
+      const measurement = childData.find((c) => c.month === month);
+
+      // Interpolate WHO values for non-standard months
+      let whoInterp = who;
+      if (!who) {
+        const before = [...whoData].reverse().find((w) => w.month < month);
+        const after = whoData.find((w) => w.month > month);
+        if (before && after) {
+          const ratio = (month - before.month) / (after.month - before.month);
+          whoInterp = {
+            month,
+            neg3: before.neg3 + ratio * (after.neg3 - before.neg3),
+            neg2: before.neg2 + ratio * (after.neg2 - before.neg2),
+            neg1: before.neg1 + ratio * (after.neg1 - before.neg1),
+            median: before.median + ratio * (after.median - before.median),
+            pos1: before.pos1 + ratio * (after.pos1 - before.pos1),
+            pos2: before.pos2 + ratio * (after.pos2 - before.pos2),
+            pos3: before.pos3 + ratio * (after.pos3 - before.pos3),
+          };
+        }
+      }
+
       return {
-        ...who,
+        month,
+        ...(whoInterp
+          ? {
+              neg3: +whoInterp.neg3.toFixed(1),
+              neg2: +whoInterp.neg2.toFixed(1),
+              neg1: +whoInterp.neg1.toFixed(1),
+              median: +whoInterp.median.toFixed(1),
+              pos1: +whoInterp.pos1.toFixed(1),
+              pos2: +whoInterp.pos2.toFixed(1),
+              pos3: +whoInterp.pos3.toFixed(1),
+            }
+          : {}),
         child: measurement?.value ?? null,
       };
     });
 
-  // Find current z-score approximation
+  // Find current z-score
   const latestMeasurement = childData[childData.length - 1];
   const closestWho = whoData.reduce((prev, curr) =>
     Math.abs(curr.month - latestMeasurement.month) < Math.abs(prev.month - latestMeasurement.month) ? curr : prev
   );
-  
+
   let zScoreLabel = "";
   let zScoreColor = "text-health-normal";
   if (latestMeasurement.value < closestWho.neg3) {
@@ -180,31 +320,115 @@ const WHOGrowthChart = ({ childId, childAgeMonths }: WHOGrowthChartProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Chart Type Toggle */}
-      <div className="flex gap-2">
+      {/* Chart Type Toggle + Add Button */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setChartType("weight")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
+              chartType === "weight"
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-muted-foreground"
+            }`}
+          >
+            <Weight className="w-3.5 h-3.5" />
+            {labels.weight}
+          </button>
+          <button
+            onClick={() => setChartType("height")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
+              chartType === "height"
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-muted-foreground"
+            }`}
+          >
+            <Ruler className="w-3.5 h-3.5" />
+            {labels.height}
+          </button>
+        </div>
         <button
-          onClick={() => setChartType("weight")}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
-            chartType === "weight"
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-muted-foreground"
+          onClick={() => {
+            setShowForm(!showForm);
+            setErrors([]);
+            setValueInput("");
+            setAgeInput(childAgeMonths.toString());
+          }}
+          className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs font-semibold transition-colors ${
+            showForm
+              ? "bg-destructive/10 text-destructive"
+              : "bg-primary text-primary-foreground"
           }`}
         >
-          <Weight className="w-3.5 h-3.5" />
-          {labels.weight}
-        </button>
-        <button
-          onClick={() => setChartType("height")}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
-            chartType === "height"
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-muted-foreground"
-          }`}
-        >
-          <Ruler className="w-3.5 h-3.5" />
-          {labels.height}
+          {showForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+          {showForm ? fl.cancel : fl.addMeasurement}
         </button>
       </div>
+
+      {/* Add Measurement Form */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="stat-card border-2 border-primary/20">
+              <h4 className="text-xs font-semibold mb-3 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-primary" />
+                {fl.addMeasurement} — {chartType === "weight" ? labels.weight : labels.height}
+              </h4>
+              <div className="flex gap-3 mb-3">
+                <div className="flex-1">
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">
+                    {fl.ageMonths}
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={60}
+                    value={ageInput}
+                    onChange={(e) => setAgeInput(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl bg-secondary border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="0-60"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">
+                    {chartType === "weight" ? fl.weightKg : fl.heightCm}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min={chartType === "weight" ? 0.5 : 30}
+                    max={chartType === "weight" ? 30 : 130}
+                    value={valueInput}
+                    onChange={(e) => setValueInput(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl bg-secondary border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder={chartType === "weight" ? "e.g. 8.5" : "e.g. 75.0"}
+                  />
+                </div>
+              </div>
+
+              {errors.length > 0 && (
+                <div className="mb-3 space-y-1">
+                  {errors.map((err, i) => (
+                    <p key={i} className="text-[11px] text-destructive">{err}</p>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={handleAddMeasurement}
+                className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-primary/90 transition-colors"
+              >
+                <Check className="w-4 h-4" />
+                {fl.save}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Current Z-Score Status */}
       <div className="stat-card">
@@ -287,6 +511,21 @@ const WHOGrowthChart = ({ childId, childAgeMonths }: WHOGrowthChartProps) => {
             <div className="w-4 h-[3px] rounded bg-health-severe/50 border-dashed" />
             <span className="text-muted-foreground">-3 / +3 SD</span>
           </div>
+        </div>
+      </div>
+
+      {/* Measurement History */}
+      <div className="stat-card">
+        <h4 className="text-xs font-semibold text-muted-foreground mb-3">
+          {fl.measurementHistory}
+        </h4>
+        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+          {[...childData].reverse().map((m, i) => (
+            <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-secondary/50 text-xs">
+              <span className="text-muted-foreground">{m.month} months</span>
+              <span className="font-semibold">{m.value} {unit}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
