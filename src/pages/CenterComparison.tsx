@@ -198,6 +198,7 @@ const CenterComparison = () => {
 
   const [sortKey, setSortKey] = useState<SortKey>("malnutritionRate");
   const [expandedCenter, setExpandedCenter] = useState<string | null>(null);
+  const [trendMetric, setTrendMetric] = useState<TrendMetric>("overall");
 
   const sortOptions: { key: SortKey; label: string }[] = [
     { key: "malnutritionRate", label: tl("malnutrition") },
