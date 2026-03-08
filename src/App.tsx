@@ -21,6 +21,7 @@ import VaccineTracker from "./pages/VaccineTracker";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import CenterComparison from "./pages/CenterComparison";
 import VisitTracking from "./pages/VisitTracking";
+import SupplyRequests from "./pages/SupplyRequests";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/supervisor" element={<Layout><SupervisorDashboard /></Layout>} />
             <Route path="/compare" element={<Layout><CenterComparison /></Layout>} />
             <Route path="/visits" element={<Layout><VisitTracking /></Layout>} />
+            <Route path="/supplies" element={<Layout><SupplyRequests /></Layout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

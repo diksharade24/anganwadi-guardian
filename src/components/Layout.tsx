@@ -14,6 +14,7 @@ import {
   Globe,
   LogOut,
   ClipboardList,
+  Package,
 } from "lucide-react";
 import { useLanguage, languageLabels, Language } from "@/contexts/LanguageContext";
 import { useRole, roleLabels, roleColors, roleIcons } from "@/contexts/RoleContext";
@@ -22,10 +23,11 @@ const navKeys = [
   { path: "/", icon: LayoutDashboard, key: "navHome" as const },
   { path: "/children", icon: Users, key: "navChildren" as const },
   { path: "/scan", icon: Camera, key: "navScan" as const },
-  { path: "/map", icon: Map, key: "navMap" as const },
+  { path: "/supplies", icon: Package, key: "navSupplies" as const },
   { path: "/visits", icon: Navigation, key: "navVisits" as const },
   { path: "/voice", icon: Mic, key: "navVoice" as const },
   { path: "/supervisor", icon: ClipboardList, key: "navSupervisor" as const },
+  { path: "/map", icon: Map, key: "navMap" as const },
 ];
 
 interface LayoutProps {
