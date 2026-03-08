@@ -58,6 +58,8 @@ const translations = {
   viewAll: { en: "View All", hi: "सभी देखें", mr: "सर्व पहा" },
   reminders: { en: "Reminders & Tasks", hi: "रिमाइंडर और कार्य", mr: "स्मरणपत्रे आणि कार्ये" },
   quickActions: { en: "Quick Actions", hi: "त्वरित कार्य", mr: "जलद कृती" },
+  compareCenters: { en: "Compare Centers", hi: "केंद्र तुलना", mr: "केंद्र तुलना" },
+  supervisorDashboard: { en: "Dashboard", hi: "डैशबोर्ड", mr: "डॅशबोर्ड" },
   stock: { en: "Stock", hi: "स्टॉक", mr: "साठा" },
   vaccines: { en: "Vaccines", hi: "टीके", mr: "लसी" },
   aiScan: { en: "AI Scan", hi: "AI स्कैन", mr: "AI स्कॅन" },
