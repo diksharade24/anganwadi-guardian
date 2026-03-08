@@ -211,15 +211,6 @@ const SupervisorDashboard = () => {
     `);
   };
 
-  const sections = [
-    { key: "overview" as const, labelKey: "summary" as TranslationKey },
-    { key: "workers" as const, label: tl("workerTrends") },
-    { key: "stock" as const, labelKey: "stock" as TranslationKey },
-    { key: "vaccine" as const, labelKey: "vaccines" as TranslationKey },
-    { key: "development" as const, labelKey: "development" as TranslationKey },
-    { key: "visits" as const, labelKey: "navVisits" as TranslationKey },
-  ];
-
   const sectionLabels: Record<string, Record<string, string>> = {
     supervisorDashboard: { en: "Supervisor Dashboard", hi: "पर्यवेक्षक डैशबोर्ड", mr: "पर्यवेक्षक डॅशबोर्ड" },
     centerOverview: { en: "Center Overview & Analytics", hi: "केंद्र अवलोकन और विश्लेषण", mr: "केंद्र आढावा आणि विश्लेषण" },
@@ -239,9 +230,61 @@ const SupervisorDashboard = () => {
     distanceCovered: { en: "Distance Covered", hi: "तय दूरी", mr: "अंतर कापले" },
     workerVisitStats: { en: "Worker Visit Summary", hi: "कार्यकर्ता विजिट सारांश", mr: "कर्मचारी भेट सारांश" },
     householdsNeedFollowUp: { en: "Households Needing Follow-up", hi: "अनुसरण आवश्यक घर", mr: "अनुसरण आवश्यक घरे" },
+    workerTrends: { en: "Worker Trends", hi: "कार्यकर्ता रुझान", mr: "कर्मचारी ट्रेंड" },
+    areaPerformance: { en: "Area-wise Performance", hi: "क्षेत्र-वार प्रदर्शन", mr: "क्षेत्रनिहाय कामगिरी" },
+    attendanceRate: { en: "Attendance Rate", hi: "उपस्थिति दर", mr: "उपस्थिती दर" },
+    visitsCompleted: { en: "Visits Done", hi: "विजिट पूर्ण", mr: "भेटी पूर्ण" },
+    overallScore: { en: "Overall Score", hi: "कुल स्कोर", mr: "एकूण स्कोर" },
+    monthlyTrend: { en: "Monthly Trend (6 months)", hi: "मासिक रुझान (6 महीने)", mr: "मासिक ट्रेंड (6 महिने)" },
+    topPerformers: { en: "Top Performers", hi: "शीर्ष प्रदर्शक", mr: "सर्वोत्तम कामगिरी" },
+    needsImprovement: { en: "Needs Improvement", hi: "सुधार आवश्यक", mr: "सुधारणा आवश्यक" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
+
+  const sections = [
+    { key: "overview" as const, labelKey: "summary" as TranslationKey },
+    { key: "workers" as const, label: tl("workerTrends") },
+    { key: "stock" as const, labelKey: "stock" as TranslationKey },
+    { key: "vaccine" as const, labelKey: "vaccines" as TranslationKey },
+    { key: "development" as const, labelKey: "development" as TranslationKey },
+    { key: "visits" as const, labelKey: "navVisits" as TranslationKey },
+  ];
+
+  // ─── Worker trends mock data ─────────────────────────────
+  const workersByArea = useMemo(() => [
+    { area: "Rampur", workers: [
+      { name: "Sunita Devi", attendance: 94, visits: 42, vaccineRate: 88, score: 91, trend: "up" },
+      { name: "Geeta Kumari", attendance: 87, visits: 35, vaccineRate: 82, score: 84, trend: "stable" },
+    ]},
+    { area: "Sundarpur", workers: [
+      { name: "Kavita Singh", attendance: 78, visits: 28, vaccineRate: 75, score: 72, trend: "down" },
+      { name: "Rani Yadav", attendance: 91, visits: 38, vaccineRate: 90, score: 89, trend: "up" },
+    ]},
+    { area: "Keshavpur", workers: [
+      { name: "Meena Sharma", attendance: 82, visits: 30, vaccineRate: 70, score: 76, trend: "stable" },
+      { name: "Pooja Gupta", attendance: 69, visits: 22, vaccineRate: 65, score: 63, trend: "down" },
+    ]},
+    { area: "Laxmipur", workers: [
+      { name: "Sarita Devi", attendance: 96, visits: 45, vaccineRate: 92, score: 94, trend: "up" },
+    ]},
+  ], []);
+
+  const monthlyTrendData = useMemo(() => [
+    { month: lang === "hi" ? "अक्टू" : lang === "mr" ? "ऑक्टो" : "Oct", Rampur: 82, Sundarpur: 74, Keshavpur: 70, Laxmipur: 88 },
+    { month: lang === "hi" ? "नवं" : lang === "mr" ? "नोव्हें" : "Nov", Rampur: 85, Sundarpur: 76, Keshavpur: 72, Laxmipur: 90 },
+    { month: lang === "hi" ? "दिसं" : lang === "mr" ? "डिसें" : "Dec", Rampur: 83, Sundarpur: 78, Keshavpur: 68, Laxmipur: 91 },
+    { month: lang === "hi" ? "जन" : lang === "mr" ? "जाने" : "Jan", Rampur: 87, Sundarpur: 80, Keshavpur: 74, Laxmipur: 93 },
+    { month: lang === "hi" ? "फर" : lang === "mr" ? "फेब्रु" : "Feb", Rampur: 88, Sundarpur: 77, Keshavpur: 73, Laxmipur: 94 },
+    { month: lang === "hi" ? "मार्च" : lang === "mr" ? "मार्च" : "Mar", Rampur: 88, Sundarpur: 79, Keshavpur: 70, Laxmipur: 95 },
+  ], [lang]);
+
+  const areaBarData = useMemo(() => workersByArea.map(a => {
+    const avgAtt = Math.round(a.workers.reduce((s, w) => s + w.attendance, 0) / a.workers.length);
+    const avgVisits = Math.round(a.workers.reduce((s, w) => s + w.visits, 0) / a.workers.length);
+    const avgScore = Math.round(a.workers.reduce((s, w) => s + w.score, 0) / a.workers.length);
+    return { area: a.area, [tl("attendanceRate")]: avgAtt, [tl("overallScore")]: avgScore };
+  }), [workersByArea]);
 
   return (
     <div className="page-container">
