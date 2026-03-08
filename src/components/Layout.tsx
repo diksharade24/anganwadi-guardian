@@ -13,8 +13,10 @@ import {
   WifiOff,
   Globe,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import { useLanguage, languageLabels, Language } from "@/contexts/LanguageContext";
+import { useRole, roleLabels, roleColors, roleIcons } from "@/contexts/RoleContext";
 
 const navKeys = [
   { path: "/", icon: LayoutDashboard, key: "navHome" as const },
@@ -23,6 +25,7 @@ const navKeys = [
   { path: "/map", icon: Map, key: "navMap" as const },
   { path: "/visits", icon: Navigation, key: "navVisits" as const },
   { path: "/voice", icon: Mic, key: "navVoice" as const },
+  { path: "/supervisor", icon: ClipboardList, key: "navSupervisor" as const },
 ];
 
 interface LayoutProps {
@@ -34,6 +37,9 @@ const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const isOnline = true;
   const { lang, setLang, t } = useLanguage();
+  const { role, canSeeNav } = useRole();
+
+  const visibleNav = navKeys.filter((item) => canSeeNav(item.path));
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,14 +55,19 @@ const Layout = ({ children }: LayoutProps) => {
               <p className="text-[10px] text-muted-foreground">{t("appSubtitle")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Role Badge */}
+            <div className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full ${roleColors[role]}`}>
+              <span>{roleIcons[role]}</span>
+              <span className="hidden sm:inline">{(roleLabels[lang] || roleLabels.en)[role]}</span>
+            </div>
             {/* Language Toggle */}
             <div className="flex items-center bg-secondary rounded-lg p-0.5">
               {(Object.keys(languageLabels) as Language[]).map((l) => (
                 <button
                   key={l}
                   onClick={() => setLang(l)}
-                  className={`text-[10px] font-semibold px-2 py-1 rounded-md transition-all ${
+                  className={`text-[10px] font-semibold px-1.5 py-1 rounded-md transition-all ${
                     lang === l
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -66,18 +77,18 @@ const Layout = ({ children }: LayoutProps) => {
                 </button>
               ))}
             </div>
-            <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
+            <div className={`flex items-center gap-1 text-[10px] px-1.5 py-1 rounded-full ${
               isOnline ? "health-badge-normal" : "health-badge-severe"
             }`}>
               {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-              {isOnline ? t("online") : t("offline")}
             </div>
             <button
               onClick={() => {
                 localStorage.removeItem("isLoggedIn");
+                localStorage.removeItem("userRole");
                 navigate("/login");
               }}
-              className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+              className="flex items-center gap-1 text-[10px] px-1.5 py-1 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
             >
               <LogOut className="w-3 h-3" />
             </button>
@@ -100,7 +111,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border">
         <div className="max-w-lg mx-auto flex items-center justify-around h-16 px-2">
-          {navKeys.map((item) => {
+          {visibleNav.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
             return (

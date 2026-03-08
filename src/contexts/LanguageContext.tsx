@@ -27,6 +27,8 @@ const translations = {
   navMap: { en: "Map", hi: "नक्शा", mr: "नकाशा" },
   navLearn: { en: "Learn", hi: "सीखें", mr: "शिका" },
   navVoice: { en: "Voice", hi: "आवाज़", mr: "आवाज" },
+  navSupervisor: { en: "Supervisor", hi: "पर्यवेक्षक", mr: "पर्यवेक्षक" },
+  navVisits: { en: "Visits", hi: "विजिट", mr: "भेटी" },
 
   // Dashboard
   greeting: { en: "Good Morning, Sunita 👋", hi: "सुप्रभात, सुनीता 👋", mr: "सुप्रभात, सुनीता 👋" },
@@ -184,7 +186,6 @@ const translations = {
   markDone: { en: "Mark done", hi: "पूर्ण करें", mr: "पूर्ण करा" },
   choose: { en: "Choose...", hi: "चुनें...", mr: "निवडा..." },
   supervisor: { en: "Supervisor", hi: "पर्यवेक्षक", mr: "पर्यवेक्षक" },
-  navVisits: { en: "Visits", hi: "विजिट", mr: "भेटी" },
   visitTracking: { en: "Visit Tracking", hi: "विजिट ट्रैकिंग", mr: "भेट ट्रॅकिंग" },
 
   // Attendance History
