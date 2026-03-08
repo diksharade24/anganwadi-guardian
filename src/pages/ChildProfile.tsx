@@ -242,6 +242,12 @@ const ChildProfile = () => {
         </>
       )}
 
+      {activeTab === "growth" && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <WHOGrowthChart childId={id || "1"} childAgeMonths={childAgeMonths} />
+        </motion.div>
+      )}
+
       {activeTab === "vaccines" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="stat-card mb-4 flex items-center gap-3">
