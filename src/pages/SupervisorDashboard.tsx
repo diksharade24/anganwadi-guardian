@@ -429,6 +429,58 @@ const SupervisorDashboard = () => {
       {/* ─── WORKER TRENDS ─────────────────────────────────── */}
       {activeSection === "workers" && (
         <div className="space-y-5">
+          {/* Filter Controls */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="w-4 h-4 text-primary" />
+              <span className="text-xs font-bold">{lang === "hi" ? "फ़िल्टर" : lang === "mr" ? "फिल्टर" : "Filters"}</span>
+            </div>
+            <div className="space-y-3">
+              {/* Area filter */}
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-1.5">{tl("areaPerformance")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => setWorkerAreaFilter("all")}
+                    className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors ${
+                      workerAreaFilter === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                    }`}
+                  >
+                    {tl("allAreas")}
+                  </button>
+                  {areaNames.map(name => (
+                    <button
+                      key={name}
+                      onClick={() => setWorkerAreaFilter(name)}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors ${
+                        workerAreaFilter === name ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Time filter */}
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-1.5">{tl("timePeriod")}</p>
+                <div className="flex gap-1.5">
+                  {([["3m", tl("threeMonths")], ["6m", tl("sixMonths")], ["12m", tl("twelveMonths")]] as const).map(([val, label]) => (
+                    <button
+                      key={val}
+                      onClick={() => setWorkerTimeFilter(val as "3m" | "6m" | "12m")}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors flex items-center gap-1 ${
+                        workerTimeFilter === val ? "bg-accent text-accent-foreground" : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      <Calendar className="w-3 h-3" /> {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Area-wise bar chart */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
             <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
