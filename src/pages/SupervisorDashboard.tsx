@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { useState, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
