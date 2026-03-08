@@ -49,6 +49,7 @@ const App = () => (
             <Route path="/nutrition" element={<Layout><NutritionStock /></Layout>} />
             <Route path="/vaccines" element={<Layout><VaccineTracker /></Layout>} />
             <Route path="/supervisor" element={<Layout><SupervisorDashboard /></Layout>} />
+            <Route path="/compare" element={<Layout><CenterComparison /></Layout>} />
             <Route path="/visits" element={<Layout><VisitTracking /></Layout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
