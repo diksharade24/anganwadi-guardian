@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Ruler, Weight, Plus, X, Calendar, Check } from "lucide-react";
+import { Ruler, Weight, Plus, X, Calendar, Check, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
