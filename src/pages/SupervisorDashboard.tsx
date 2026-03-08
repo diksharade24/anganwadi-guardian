@@ -20,6 +20,8 @@ import {
   BarChart3,
   UserCheck,
   Star,
+  Filter,
+  Calendar,
 } from "lucide-react";
 import { StatCard, StatusBadge } from "@/components/HealthWidgets";
 import { exportToPDF } from "@/lib/pdfExport";
