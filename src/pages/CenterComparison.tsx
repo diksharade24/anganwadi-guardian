@@ -87,6 +87,18 @@ const centersData: CenterData[] = [
   },
 ];
 
+// Monthly trend data (last 6 months)
+const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+type TrendMetric = "overall" | "vaccine" | "malnutrition" | "attendance";
+
+const monthlyTrends: Record<string, Record<TrendMetric, number[]>> = {
+  "awc-01": { overall: [68, 70, 67, 65, 64, 66], vaccine: [70, 72, 74, 75, 76, 78], malnutrition: [32, 33, 35, 36, 38, 37.5], attendance: [88, 87, 86, 85, 84, 85] },
+  "awc-02": { overall: [72, 75, 78, 80, 83, 86], vaccine: [82, 84, 86, 88, 90, 92], malnutrition: [30, 28, 26, 24, 22, 21.4], attendance: [85, 87, 88, 89, 90, 91] },
+  "awc-03": { overall: [62, 60, 58, 57, 55, 54], vaccine: [72, 70, 68, 66, 65, 64], malnutrition: [36, 38, 39, 41, 43, 44], attendance: [80, 78, 76, 74, 73, 72] },
+  "awc-04": { overall: [70, 73, 75, 77, 79, 81], vaccine: [80, 82, 84, 85, 87, 88], malnutrition: [28, 26, 24, 23, 21, 20], attendance: [82, 84, 85, 86, 87, 88] },
+  "awc-05": { overall: [70, 71, 70, 72, 71, 72], vaccine: [78, 79, 80, 81, 81, 82], malnutrition: [28, 27, 28, 27, 27, 27.3], attendance: [78, 79, 78, 80, 79, 79] },
+};
+
 type SortKey = "malnutritionRate" | "vaccineCoverage" | "attendanceRate" | "stockScore" | "visitCompletion";
 
 const labels: Record<string, Record<string, string>> = {
