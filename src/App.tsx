@@ -56,6 +56,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </RoleProvider>
       </LanguageProvider>
     </TooltipProvider>
   </QueryClientProvider>
