@@ -133,6 +133,8 @@ const SupervisorDashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
   const [activeSection, setActiveSection] = useState<"overview" | "workers" | "stock" | "vaccine" | "development" | "visits">("overview");
+  const [workerAreaFilter, setWorkerAreaFilter] = useState<string>("all");
+  const [workerTimeFilter, setWorkerTimeFilter] = useState<"3m" | "6m" | "12m">("6m");
 
   // Stock data from localStorage or defaults
   const stock: StockItem[] = useMemo(() => {
