@@ -527,7 +527,7 @@ const SupervisorDashboard = () => {
           </motion.div>
 
           {/* Workers by area cards */}
-          {workersByArea.map((area, ai) => (
+          {filteredAreas.map((area, ai) => (
             <motion.div
               key={area.area}
               initial={{ opacity: 0, y: 8 }}
