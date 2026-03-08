@@ -21,6 +21,7 @@ import VaccineTracker from "./pages/VaccineTracker";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import CenterComparison from "./pages/CenterComparison";
 import VisitTracking from "./pages/VisitTracking";
+import SupplyRequests from "./pages/SupplyRequests";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 
