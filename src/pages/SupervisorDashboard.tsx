@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { useState, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -20,6 +20,8 @@ import {
   BarChart3,
   UserCheck,
   Star,
+  Filter,
+  Calendar,
 } from "lucide-react";
 import { StatCard, StatusBadge } from "@/components/HealthWidgets";
 import { exportToPDF } from "@/lib/pdfExport";
@@ -131,6 +133,8 @@ const SupervisorDashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
   const [activeSection, setActiveSection] = useState<"overview" | "workers" | "stock" | "vaccine" | "development" | "visits">("overview");
+  const [workerAreaFilter, setWorkerAreaFilter] = useState<string>("all");
+  const [workerTimeFilter, setWorkerTimeFilter] = useState<"3m" | "6m" | "12m">("6m");
 
   // Stock data from localStorage or defaults
   const stock: StockItem[] = useMemo(() => {
@@ -238,6 +242,11 @@ const SupervisorDashboard = () => {
     monthlyTrend: { en: "Monthly Trend (6 months)", hi: "मासिक रुझान (6 महीने)", mr: "मासिक ट्रेंड (6 महिने)" },
     topPerformers: { en: "Top Performers", hi: "शीर्ष प्रदर्शक", mr: "सर्वोत्तम कामगिरी" },
     needsImprovement: { en: "Needs Improvement", hi: "सुधार आवश्यक", mr: "सुधारणा आवश्यक" },
+    allAreas: { en: "All Areas", hi: "सभी क्षेत्र", mr: "सर्व क्षेत्रे" },
+    timePeriod: { en: "Period", hi: "अवधि", mr: "कालावधी" },
+    threeMonths: { en: "3 Months", hi: "3 महीने", mr: "3 महिने" },
+    sixMonths: { en: "6 Months", hi: "6 महीने", mr: "6 महिने" },
+    twelveMonths: { en: "12 Months", hi: "12 महीने", mr: "12 महिने" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
@@ -270,21 +279,38 @@ const SupervisorDashboard = () => {
     ]},
   ], []);
 
-  const monthlyTrendData = useMemo(() => [
-    { month: lang === "hi" ? "अक्टू" : lang === "mr" ? "ऑक्टो" : "Oct", Rampur: 82, Sundarpur: 74, Keshavpur: 70, Laxmipur: 88 },
-    { month: lang === "hi" ? "नवं" : lang === "mr" ? "नोव्हें" : "Nov", Rampur: 85, Sundarpur: 76, Keshavpur: 72, Laxmipur: 90 },
-    { month: lang === "hi" ? "दिसं" : lang === "mr" ? "डिसें" : "Dec", Rampur: 83, Sundarpur: 78, Keshavpur: 68, Laxmipur: 91 },
-    { month: lang === "hi" ? "जन" : lang === "mr" ? "जाने" : "Jan", Rampur: 87, Sundarpur: 80, Keshavpur: 74, Laxmipur: 93 },
-    { month: lang === "hi" ? "फर" : lang === "mr" ? "फेब्रु" : "Feb", Rampur: 88, Sundarpur: 77, Keshavpur: 73, Laxmipur: 94 },
-    { month: lang === "hi" ? "मार्च" : lang === "mr" ? "मार्च" : "Mar", Rampur: 88, Sundarpur: 79, Keshavpur: 70, Laxmipur: 95 },
+  const allMonthlyData = useMemo(() => [
+    { month: lang === "hi" ? "अप्रैल" : lang === "mr" ? "एप्रिल" : "Apr", Rampur: 78, Sundarpur: 70, Keshavpur: 66, Laxmipur: 84, idx: 0 },
+    { month: lang === "hi" ? "मई" : lang === "mr" ? "मे" : "May", Rampur: 79, Sundarpur: 71, Keshavpur: 67, Laxmipur: 85, idx: 1 },
+    { month: lang === "hi" ? "जून" : lang === "mr" ? "जून" : "Jun", Rampur: 80, Sundarpur: 72, Keshavpur: 68, Laxmipur: 86, idx: 2 },
+    { month: lang === "hi" ? "जुलाई" : lang === "mr" ? "जुलै" : "Jul", Rampur: 80, Sundarpur: 73, Keshavpur: 67, Laxmipur: 87, idx: 3 },
+    { month: lang === "hi" ? "अगस्त" : lang === "mr" ? "ऑगस्ट" : "Aug", Rampur: 81, Sundarpur: 73, Keshavpur: 69, Laxmipur: 87, idx: 4 },
+    { month: lang === "hi" ? "सितंबर" : lang === "mr" ? "सप्टें" : "Sep", Rampur: 81, Sundarpur: 74, Keshavpur: 69, Laxmipur: 88, idx: 5 },
+    { month: lang === "hi" ? "अक्टू" : lang === "mr" ? "ऑक्टो" : "Oct", Rampur: 82, Sundarpur: 74, Keshavpur: 70, Laxmipur: 88, idx: 6 },
+    { month: lang === "hi" ? "नवं" : lang === "mr" ? "नोव्हें" : "Nov", Rampur: 85, Sundarpur: 76, Keshavpur: 72, Laxmipur: 90, idx: 7 },
+    { month: lang === "hi" ? "दिसं" : lang === "mr" ? "डिसें" : "Dec", Rampur: 83, Sundarpur: 78, Keshavpur: 68, Laxmipur: 91, idx: 8 },
+    { month: lang === "hi" ? "जन" : lang === "mr" ? "जाने" : "Jan", Rampur: 87, Sundarpur: 80, Keshavpur: 74, Laxmipur: 93, idx: 9 },
+    { month: lang === "hi" ? "फर" : lang === "mr" ? "फेब्रु" : "Feb", Rampur: 88, Sundarpur: 77, Keshavpur: 73, Laxmipur: 94, idx: 10 },
+    { month: lang === "hi" ? "मार्च" : lang === "mr" ? "मार्च" : "Mar", Rampur: 88, Sundarpur: 79, Keshavpur: 70, Laxmipur: 95, idx: 11 },
   ], [lang]);
 
-  const areaBarData = useMemo(() => workersByArea.map(a => {
+  const monthlyTrendData = useMemo(() => {
+    const count = workerTimeFilter === "3m" ? 3 : workerTimeFilter === "6m" ? 6 : 12;
+    return allMonthlyData.slice(-count);
+  }, [allMonthlyData, workerTimeFilter]);
+
+  const filteredAreas = useMemo(() => 
+    workerAreaFilter === "all" ? workersByArea : workersByArea.filter(a => a.area === workerAreaFilter)
+  , [workersByArea, workerAreaFilter]);
+
+  const areaBarData = useMemo(() => filteredAreas.map(a => {
     const avgAtt = Math.round(a.workers.reduce((s, w) => s + w.attendance, 0) / a.workers.length);
-    const avgVisits = Math.round(a.workers.reduce((s, w) => s + w.visits, 0) / a.workers.length);
     const avgScore = Math.round(a.workers.reduce((s, w) => s + w.score, 0) / a.workers.length);
     return { area: a.area, [tl("attendanceRate")]: avgAtt, [tl("overallScore")]: avgScore };
-  }), [workersByArea]);
+  }), [filteredAreas]);
+
+  const areaNames = useMemo(() => workersByArea.map(a => a.area), [workersByArea]);
+  const visibleAreaNames = useMemo(() => filteredAreas.map(a => a.area), [filteredAreas]);
 
   return (
     <div className="page-container">
@@ -403,6 +429,58 @@ const SupervisorDashboard = () => {
       {/* ─── WORKER TRENDS ─────────────────────────────────── */}
       {activeSection === "workers" && (
         <div className="space-y-5">
+          {/* Filter Controls */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="w-4 h-4 text-primary" />
+              <span className="text-xs font-bold">{lang === "hi" ? "फ़िल्टर" : lang === "mr" ? "फिल्टर" : "Filters"}</span>
+            </div>
+            <div className="space-y-3">
+              {/* Area filter */}
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-1.5">{tl("areaPerformance")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => setWorkerAreaFilter("all")}
+                    className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors ${
+                      workerAreaFilter === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                    }`}
+                  >
+                    {tl("allAreas")}
+                  </button>
+                  {areaNames.map(name => (
+                    <button
+                      key={name}
+                      onClick={() => setWorkerAreaFilter(name)}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors ${
+                        workerAreaFilter === name ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Time filter */}
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-1.5">{tl("timePeriod")}</p>
+                <div className="flex gap-1.5">
+                  {([["3m", tl("threeMonths")], ["6m", tl("sixMonths")], ["12m", tl("twelveMonths")]] as const).map(([val, label]) => (
+                    <button
+                      key={val}
+                      onClick={() => setWorkerTimeFilter(val as "3m" | "6m" | "12m")}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors flex items-center gap-1 ${
+                        workerTimeFilter === val ? "bg-accent text-accent-foreground" : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      <Calendar className="w-3 h-3" /> {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Area-wise bar chart */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
             <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
@@ -439,17 +517,17 @@ const SupervisorDashboard = () => {
                   <YAxis tick={{ fontSize: 10 }} domain={[50, 100]} />
                   <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12 }} />
                   <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                  <Line type="monotone" dataKey="Rampur" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="Sundarpur" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="Keshavpur" stroke="hsl(var(--health-risk))" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="Laxmipur" stroke="hsl(var(--health-normal))" strokeWidth={2} dot={{ r: 3 }} />
+                  {visibleAreaNames.includes("Rampur") && <Line type="monotone" dataKey="Rampur" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />}
+                  {visibleAreaNames.includes("Sundarpur") && <Line type="monotone" dataKey="Sundarpur" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} />}
+                  {visibleAreaNames.includes("Keshavpur") && <Line type="monotone" dataKey="Keshavpur" stroke="hsl(var(--health-risk))" strokeWidth={2} dot={{ r: 3 }} />}
+                  {visibleAreaNames.includes("Laxmipur") && <Line type="monotone" dataKey="Laxmipur" stroke="hsl(var(--health-normal))" strokeWidth={2} dot={{ r: 3 }} />}
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </motion.div>
 
           {/* Workers by area cards */}
-          {workersByArea.map((area, ai) => (
+          {filteredAreas.map((area, ai) => (
             <motion.div
               key={area.area}
               initial={{ opacity: 0, y: 8 }}
