@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useRole, UserRole, roleLabels, roleIcons, roleColors } from "@/contexts/RoleContext";
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -18,7 +19,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { lang } = useLanguage();
+  const { role, setRole } = useRole();
+
+  const roles: UserRole[] = ["worker", "supervisor", "district_officer"];
+  const rl = roleLabels[lang] || roleLabels.en;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,10 +71,10 @@ const Login = () => {
             <Heart className="w-8 h-8 text-primary" />
           </motion.div>
           <h1 className="text-2xl font-bold text-foreground">
-            {t("appName")}
+            AnganTrack
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {t("appSubtitle")}
+            Child Health & Nutrition Tracker
           </p>
 
           {/* Health color indicator chips */}
@@ -128,6 +133,30 @@ const Login = () => {
 
           <CardContent className="px-6 pb-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Role Selector */}
+              <div className="space-y-2">
+                <Label className="text-foreground text-xs font-semibold">
+                  {lang === "hi" ? "भूमिका चुनें" : lang === "mr" ? "भूमिका निवडा" : "Select Role"}
+                </Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {roles.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all duration-200 ${
+                        role === r
+                          ? `${roleColors[r]} border-current shadow-sm`
+                          : "border-border bg-secondary/50 text-muted-foreground hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      <span className="text-xl">{roleIcons[r]}</span>
+                      <span className="text-[10px] font-semibold leading-tight text-center">{rl[r]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Name field (sign up only) */}
               {isSignUp && (
                 <motion.div
