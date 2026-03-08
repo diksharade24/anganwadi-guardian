@@ -22,16 +22,16 @@ export const roleColors: Record<UserRole, string> = {
 
 // Define which routes each role can access
 export const rolePermissions: Record<UserRole, string[]> = {
-  worker: ["/", "/children", "/children/add", "/child", "/scan", "/map", "/voice", "/learn", "/attendance", "/attendance/history", "/nutrition", "/vaccines", "/visits"],
-  supervisor: ["/", "/children", "/children/add", "/child", "/scan", "/map", "/voice", "/learn", "/attendance", "/attendance/history", "/nutrition", "/vaccines", "/visits", "/supervisor", "/compare"],
-  district_officer: ["/", "/children", "/child", "/map", "/attendance/history", "/nutrition", "/vaccines", "/supervisor", "/compare"],
+  worker: ["/", "/children", "/children/add", "/child", "/scan", "/map", "/voice", "/learn", "/attendance", "/attendance/history", "/nutrition", "/vaccines", "/visits", "/supplies"],
+  supervisor: ["/", "/children", "/children/add", "/child", "/scan", "/map", "/voice", "/learn", "/attendance", "/attendance/history", "/nutrition", "/vaccines", "/visits", "/supervisor", "/compare", "/supplies"],
+  district_officer: ["/", "/children", "/child", "/map", "/attendance/history", "/nutrition", "/vaccines", "/supervisor", "/compare", "/supplies"],
 };
 
 // Define which nav items each role sees
 export const roleNavItems: Record<UserRole, string[]> = {
-  worker: ["/", "/children", "/scan", "/map", "/visits", "/voice"],
-  supervisor: ["/", "/children", "/scan", "/map", "/visits", "/voice"],
-  district_officer: ["/", "/children", "/map", "/supervisor"],
+  worker: ["/", "/children", "/scan", "/supplies", "/visits", "/voice"],
+  supervisor: ["/", "/children", "/scan", "/supplies", "/visits", "/voice"],
+  district_officer: ["/", "/children", "/map", "/supplies", "/supervisor"],
 };
 
 interface RoleContextType {

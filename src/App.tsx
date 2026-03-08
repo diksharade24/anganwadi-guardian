@@ -54,6 +54,7 @@ const App = () => (
             <Route path="/supervisor" element={<Layout><SupervisorDashboard /></Layout>} />
             <Route path="/compare" element={<Layout><CenterComparison /></Layout>} />
             <Route path="/visits" element={<Layout><VisitTracking /></Layout>} />
+            <Route path="/supplies" element={<Layout><SupplyRequests /></Layout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
