@@ -30,6 +30,8 @@ import {
   PolarRadiusAxis,
   Radar,
   Legend,
+  LineChart,
+  Line,
 } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
 
