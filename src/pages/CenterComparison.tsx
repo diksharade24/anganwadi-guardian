@@ -30,6 +30,8 @@ import {
   PolarRadiusAxis,
   Radar,
   Legend,
+  LineChart,
+  Line,
 } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -85,6 +87,18 @@ const centersData: CenterData[] = [
   },
 ];
 
+// Monthly trend data (last 6 months)
+const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+type TrendMetric = "overall" | "vaccine" | "malnutrition" | "attendance";
+
+const monthlyTrends: Record<string, Record<TrendMetric, number[]>> = {
+  "awc-01": { overall: [68, 70, 67, 65, 64, 66], vaccine: [70, 72, 74, 75, 76, 78], malnutrition: [32, 33, 35, 36, 38, 37.5], attendance: [88, 87, 86, 85, 84, 85] },
+  "awc-02": { overall: [72, 75, 78, 80, 83, 86], vaccine: [82, 84, 86, 88, 90, 92], malnutrition: [30, 28, 26, 24, 22, 21.4], attendance: [85, 87, 88, 89, 90, 91] },
+  "awc-03": { overall: [62, 60, 58, 57, 55, 54], vaccine: [72, 70, 68, 66, 65, 64], malnutrition: [36, 38, 39, 41, 43, 44], attendance: [80, 78, 76, 74, 73, 72] },
+  "awc-04": { overall: [70, 73, 75, 77, 79, 81], vaccine: [80, 82, 84, 85, 87, 88], malnutrition: [28, 26, 24, 23, 21, 20], attendance: [82, 84, 85, 86, 87, 88] },
+  "awc-05": { overall: [70, 71, 70, 72, 71, 72], vaccine: [78, 79, 80, 81, 81, 82], malnutrition: [28, 27, 28, 27, 27, 27.3], attendance: [78, 79, 78, 80, 79, 79] },
+};
+
 type SortKey = "malnutritionRate" | "vaccineCoverage" | "attendanceRate" | "stockScore" | "visitCompletion";
 
 const labels: Record<string, Record<string, string>> = {
@@ -111,6 +125,11 @@ const labels: Record<string, Record<string, string>> = {
     improving: "Improving",
     declining: "Declining",
     stable: "Stable",
+    trendTitle: "6-Month Trends",
+    trendOverall: "Overall Score",
+    trendVaccine: "Vaccine Coverage",
+    trendMalnutrition: "Malnutrition Rate",
+    trendAttendance: "Attendance Rate",
   },
   hi: {
     title: "केंद्र तुलना",
@@ -135,6 +154,11 @@ const labels: Record<string, Record<string, string>> = {
     improving: "सुधार हो रहा",
     declining: "गिरावट",
     stable: "स्थिर",
+    trendTitle: "6 माह रुझान",
+    trendOverall: "समग्र स्कोर",
+    trendVaccine: "टीका कवरेज",
+    trendMalnutrition: "कुपोषण दर",
+    trendAttendance: "उपस्थिति दर",
   },
   mr: {
     title: "केंद्र तुलना",
@@ -159,6 +183,11 @@ const labels: Record<string, Record<string, string>> = {
     improving: "सुधारत आहे",
     declining: "घसरत आहे",
     stable: "स्थिर",
+    trendTitle: "6 महिने ट्रेंड",
+    trendOverall: "एकंदर स्कोर",
+    trendVaccine: "लस कव्हरेज",
+    trendMalnutrition: "कुपोषण दर",
+    trendAttendance: "उपस्थिती दर",
   },
 };
 
@@ -169,6 +198,7 @@ const CenterComparison = () => {
 
   const [sortKey, setSortKey] = useState<SortKey>("malnutritionRate");
   const [expandedCenter, setExpandedCenter] = useState<string | null>(null);
+  const [trendMetric, setTrendMetric] = useState<TrendMetric>("overall");
 
   const sortOptions: { key: SortKey; label: string }[] = [
     { key: "malnutritionRate", label: tl("malnutrition") },
@@ -311,6 +341,78 @@ const CenterComparison = () => {
                 formatter={(value: string) => <span className="text-muted-foreground">{value}</span>}
               />
             </RadarChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
+      {/* Monthly Trend Charts */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="stat-card mb-6">
+        <h3 className="section-title mb-3">{tl("trendTitle")}</h3>
+        
+        {/* Trend metric toggle */}
+        <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+          {([
+            { key: "overall" as TrendMetric, label: tl("trendOverall") },
+            { key: "vaccine" as TrendMetric, label: tl("trendVaccine") },
+            { key: "malnutrition" as TrendMetric, label: tl("trendMalnutrition") },
+            { key: "attendance" as TrendMetric, label: tl("trendAttendance") },
+          ]).map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setTrendMetric(opt.key)}
+              className={`px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap transition-colors ${
+                trendMetric === opt.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={months.map((month, mi) => ({
+                month,
+                ...Object.fromEntries(
+                  centersData.map((c) => [
+                    c.name.replace("AWC ", ""),
+                    monthlyTrends[c.id]?.[trendMetric]?.[mi] ?? 0,
+                  ])
+                ),
+              }))}
+              margin={{ top: 5, right: 5, bottom: 5, left: -15 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+              <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={trendMetric === "malnutrition" ? [10, 50] : [40, 100]} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "0.75rem",
+                  border: "1px solid hsl(var(--border))",
+                  fontSize: "11px",
+                  backgroundColor: "hsl(var(--card))",
+                }}
+                formatter={(value: number) => [`${value}%`]}
+              />
+              {centersData.map((center, i) => (
+                <Line
+                  key={center.id}
+                  type="monotone"
+                  dataKey={center.name.replace("AWC ", "")}
+                  stroke={radarColors[i]}
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: radarColors[i], stroke: "hsl(var(--card))", strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+              ))}
+              <Legend
+                wrapperStyle={{ fontSize: "10px" }}
+                formatter={(value: string) => <span className="text-muted-foreground">{value}</span>}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </motion.div>
