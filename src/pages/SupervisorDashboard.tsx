@@ -592,7 +592,8 @@ const SupervisorDashboard = () => {
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + ai * 0.05 + wi * 0.03 }}
-                    className="stat-card"
+                    className="stat-card cursor-pointer active:scale-[0.98] transition-transform"
+                    onClick={() => setSelectedWorker({ ...w, area: area.area })}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
@@ -629,6 +630,7 @@ const SupervisorDashboard = () => {
                         <p className="text-[9px] text-muted-foreground">{t("vaccines")}</p>
                       </div>
                     </div>
+                    <p className="text-[9px] text-primary mt-2 text-center font-medium">{tl("viewProfile")} →</p>
                   </motion.div>
                 ))}
               </div>
