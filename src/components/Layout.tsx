@@ -15,6 +15,7 @@ import {
   LogOut,
   ClipboardList,
   Package,
+  UserCircle,
 } from "lucide-react";
 import { useLanguage, languageLabels, Language } from "@/contexts/LanguageContext";
 import { useRole, roleLabels, roleColors, roleIcons } from "@/contexts/RoleContext";
@@ -58,11 +59,14 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            {/* Role Badge */}
-            <div className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full ${roleColors[role]}`}>
+            {/* Role Badge / Profile Link */}
+            <button
+              onClick={() => navigate("/profile")}
+              className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full ${roleColors[role]} hover:opacity-80 transition-opacity`}
+            >
               <span>{roleIcons[role]}</span>
               <span className="hidden sm:inline">{(roleLabels[lang] || roleLabels.en)[role]}</span>
-            </div>
+            </button>
             {/* Language Toggle */}
             <div className="flex items-center bg-secondary rounded-lg p-0.5">
               {(Object.keys(languageLabels) as Language[]).map((l) => (
