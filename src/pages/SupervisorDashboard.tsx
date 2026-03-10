@@ -253,9 +253,51 @@ const SupervisorDashboard = () => {
     threeMonths: { en: "3 Months", hi: "3 महीने", mr: "3 महिने" },
     sixMonths: { en: "6 Months", hi: "6 महीने", mr: "6 महिने" },
     twelveMonths: { en: "12 Months", hi: "12 महीने", mr: "12 महिने" },
+    viewProfile: { en: "View Profile", hi: "प्रोफ़ाइल देखें", mr: "प्रोफाइल पहा" },
+    monthlyBreakdown: { en: "Monthly Breakdown", hi: "मासिक विवरण", mr: "मासिक तपशील" },
+    skillRadar: { en: "Skills Overview", hi: "कौशल अवलोकन", mr: "कौशल्य आढावा" },
+    performanceTrend: { en: "Performance Trend", hi: "प्रदर्शन रुझान", mr: "कामगिरी ट्रेंड" },
+    homeVisits: { en: "Home Visits", hi: "घर विजिट", mr: "घरभेटी" },
+    avgRating: { en: "Avg Rating", hi: "औसत रेटिंग", mr: "सरासरी रेटिंग" },
+    childrenCovered: { en: "Children Covered", hi: "शामिल बच्चे", mr: "समाविष्ट मुले" },
+    reportsSubmitted: { en: "Reports", hi: "रिपोर्ट", mr: "अहवाल" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
+
+  // Generate detailed monthly history for selected worker
+  const workerMonthlyHistory = useMemo(() => {
+    if (!selectedWorker) return [];
+    const months = lang === "hi"
+      ? ["जन", "फर", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अग", "सित", "अक्टू", "नवं", "दिसं"]
+      : lang === "mr"
+      ? ["जाने", "फेब्रु", "मार्च", "एप्रि", "मे", "जून", "जुलै", "ऑग", "सप्टें", "ऑक्टो", "नोव्हें", "डिसें"]
+      : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    const base = selectedWorker.score;
+    // Seed from name for consistent data
+    const seed = selectedWorker.name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+    
+    return months.map((m, i) => {
+      const variance = Math.sin(seed + i * 1.3) * 8;
+      const att = Math.min(100, Math.max(50, Math.round(selectedWorker.attendance + variance - (11 - i) * 0.8)));
+      const vis = Math.max(10, Math.round(selectedWorker.visits / 12 * (0.7 + Math.sin(seed + i) * 0.3) * 12));
+      const vac = Math.min(100, Math.max(40, Math.round(selectedWorker.vaccineRate + variance * 0.7 - (11 - i) * 0.6)));
+      const sc = Math.min(100, Math.max(40, Math.round(base + variance - (11 - i) * 0.7)));
+      return { month: m, attendance: att, visits: vis, vaccineRate: vac, score: sc, children: Math.round(15 + Math.sin(seed + i) * 5), reports: Math.round(3 + Math.sin(seed + i * 2) * 2) };
+    });
+  }, [selectedWorker, lang]);
+
+  const workerRadarData = useMemo(() => {
+    if (!selectedWorker) return [];
+    return [
+      { skill: tl("attendanceRate"), value: selectedWorker.attendance },
+      { skill: tl("homeVisits"), value: Math.min(100, Math.round(selectedWorker.visits * 2.2)) },
+      { skill: t("vaccines"), value: selectedWorker.vaccineRate },
+      { skill: tl("reportsSubmitted"), value: Math.min(100, Math.round(selectedWorker.score * 0.95 + 5)) },
+      { skill: tl("childrenCovered"), value: Math.min(100, Math.round(selectedWorker.score * 1.02)) },
+    ];
+  }, [selectedWorker]);
 
   const sections = [
     { key: "overview" as const, labelKey: "summary" as TranslationKey },
