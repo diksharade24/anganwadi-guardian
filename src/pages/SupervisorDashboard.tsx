@@ -880,6 +880,112 @@ const SupervisorDashboard = () => {
           </div>
         );
       })()}
+
+      {/* ─── WORKER PROFILE DIALOG ──────────────────────────── */}
+      <Dialog open={!!selectedWorker} onOpenChange={(open) => !open && setSelectedWorker(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          {selectedWorker && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    selectedWorker.score >= 85 ? "bg-health-normal-bg" : selectedWorker.score >= 70 ? "bg-health-risk-bg" : "bg-health-severe-bg"
+                  }`}>
+                    <UserCheck className={`w-5 h-5 ${
+                      selectedWorker.score >= 85 ? "text-health-normal" : selectedWorker.score >= 70 ? "text-health-risk" : "text-health-severe"
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="text-base font-bold">{selectedWorker.name}</p>
+                    <p className="text-xs text-muted-foreground font-normal flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> {selectedWorker.area}
+                    </p>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+
+              {/* Summary Stats */}
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {[
+                  { label: tl("attendanceRate"), value: `${selectedWorker.attendance}%`, icon: UserCheck },
+                  { label: tl("homeVisits"), value: selectedWorker.visits, icon: Home },
+                  { label: t("vaccines"), value: `${selectedWorker.vaccineRate}%`, icon: Syringe },
+                  { label: tl("overallScore"), value: `${selectedWorker.score}%`, icon: Award },
+                ].map((s, i) => (
+                  <div key={i} className="text-center p-2 rounded-xl bg-secondary">
+                    <s.icon className="w-3.5 h-3.5 mx-auto mb-1 text-primary" />
+                    <p className="text-sm font-bold">{s.value}</p>
+                    <p className="text-[8px] text-muted-foreground leading-tight">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Radar Chart - Skills */}
+              <div className="mt-4">
+                <h4 className="text-xs font-bold mb-2 flex items-center gap-1.5">
+                  <Star className="w-3.5 h-3.5 text-accent" /> {tl("skillRadar")}
+                </h4>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={workerRadarData} outerRadius="70%">
+                      <PolarGrid strokeDasharray="3 3" className="opacity-30" />
+                      <PolarAngleAxis dataKey="skill" tick={{ fontSize: 9 }} />
+                      <PolarRadiusAxis tick={{ fontSize: 8 }} domain={[0, 100]} />
+                      <Radar dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} strokeWidth={2} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Performance Trend - Area Chart */}
+              <div className="mt-4">
+                <h4 className="text-xs font-bold mb-2 flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-primary" /> {tl("performanceTrend")}
+                </h4>
+                <div className="h-44">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={workerMonthlyHistory}>
+                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                      <XAxis dataKey="month" tick={{ fontSize: 9 }} />
+                      <YAxis tick={{ fontSize: 9 }} domain={[40, 100]} />
+                      <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12 }} />
+                      <Area type="monotone" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} name={tl("overallScore")} />
+                      <Area type="monotone" dataKey="attendance" stroke="hsl(var(--accent))" fill="hsl(var(--accent))" fillOpacity={0.1} strokeWidth={1.5} name={tl("attendanceRate")} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Monthly Breakdown Table */}
+              <div className="mt-4">
+                <h4 className="text-xs font-bold mb-2 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground" /> {tl("monthlyBreakdown")}
+                </h4>
+                <div className="rounded-xl border overflow-hidden">
+                  <div className="grid grid-cols-5 gap-0 text-[9px] font-semibold text-muted-foreground bg-secondary p-2">
+                    <span>{lang === "hi" ? "माह" : lang === "mr" ? "महिना" : "Month"}</span>
+                    <span className="text-center">{tl("attendanceRate")}</span>
+                    <span className="text-center">{tl("homeVisits")}</span>
+                    <span className="text-center">{t("vaccines")}</span>
+                    <span className="text-center">{tl("overallScore")}</span>
+                  </div>
+                  {workerMonthlyHistory.map((m, i) => (
+                    <div key={i} className={`grid grid-cols-5 gap-0 text-[10px] p-2 ${i % 2 === 0 ? "" : "bg-secondary/50"}`}>
+                      <span className="font-medium">{m.month}</span>
+                      <span className="text-center">{m.attendance}%</span>
+                      <span className="text-center">{m.visits}</span>
+                      <span className="text-center">{m.vaccineRate}%</span>
+                      <span className={`text-center font-bold ${
+                        m.score >= 85 ? "text-health-normal" : m.score >= 70 ? "text-health-risk" : "text-health-severe"
+                      }`}>{m.score}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
