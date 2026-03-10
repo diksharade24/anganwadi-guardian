@@ -22,7 +22,12 @@ import {
   Star,
   Filter,
   Calendar,
+  X,
+  Home,
+  Award,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area } from "recharts";
 import { StatCard, StatusBadge } from "@/components/HealthWidgets";
 import { exportToPDF } from "@/lib/pdfExport";
 import { useLanguage, type TranslationKey } from "@/contexts/LanguageContext";
