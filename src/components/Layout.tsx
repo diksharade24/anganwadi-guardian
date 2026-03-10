@@ -15,6 +15,7 @@ import {
   LogOut,
   ClipboardList,
   Package,
+  UserCircle,
 } from "lucide-react";
 import { useLanguage, languageLabels, Language } from "@/contexts/LanguageContext";
 import { useRole, roleLabels, roleColors, roleIcons } from "@/contexts/RoleContext";
