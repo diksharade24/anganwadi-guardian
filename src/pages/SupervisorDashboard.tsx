@@ -140,6 +140,7 @@ const SupervisorDashboard = () => {
   const [activeSection, setActiveSection] = useState<"overview" | "workers" | "stock" | "vaccine" | "development" | "visits">("overview");
   const [workerAreaFilter, setWorkerAreaFilter] = useState<string>("all");
   const [workerTimeFilter, setWorkerTimeFilter] = useState<"3m" | "6m" | "12m">("6m");
+  const [selectedWorker, setSelectedWorker] = useState<{ name: string; area: string; attendance: number; visits: number; vaccineRate: number; score: number; trend: string } | null>(null);
 
   // Stock data from localStorage or defaults
   const stock: StockItem[] = useMemo(() => {
