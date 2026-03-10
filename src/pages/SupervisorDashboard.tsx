@@ -22,7 +22,12 @@ import {
   Star,
   Filter,
   Calendar,
+  X,
+  Home,
+  Award,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area } from "recharts";
 import { StatCard, StatusBadge } from "@/components/HealthWidgets";
 import { exportToPDF } from "@/lib/pdfExport";
 import { useLanguage, type TranslationKey } from "@/contexts/LanguageContext";
@@ -135,6 +140,7 @@ const SupervisorDashboard = () => {
   const [activeSection, setActiveSection] = useState<"overview" | "workers" | "stock" | "vaccine" | "development" | "visits">("overview");
   const [workerAreaFilter, setWorkerAreaFilter] = useState<string>("all");
   const [workerTimeFilter, setWorkerTimeFilter] = useState<"3m" | "6m" | "12m">("6m");
+  const [selectedWorker, setSelectedWorker] = useState<{ name: string; area: string; attendance: number; visits: number; vaccineRate: number; score: number; trend: string } | null>(null);
 
   // Stock data from localStorage or defaults
   const stock: StockItem[] = useMemo(() => {
@@ -247,9 +253,51 @@ const SupervisorDashboard = () => {
     threeMonths: { en: "3 Months", hi: "3 महीने", mr: "3 महिने" },
     sixMonths: { en: "6 Months", hi: "6 महीने", mr: "6 महिने" },
     twelveMonths: { en: "12 Months", hi: "12 महीने", mr: "12 महिने" },
+    viewProfile: { en: "View Profile", hi: "प्रोफ़ाइल देखें", mr: "प्रोफाइल पहा" },
+    monthlyBreakdown: { en: "Monthly Breakdown", hi: "मासिक विवरण", mr: "मासिक तपशील" },
+    skillRadar: { en: "Skills Overview", hi: "कौशल अवलोकन", mr: "कौशल्य आढावा" },
+    performanceTrend: { en: "Performance Trend", hi: "प्रदर्शन रुझान", mr: "कामगिरी ट्रेंड" },
+    homeVisits: { en: "Home Visits", hi: "घर विजिट", mr: "घरभेटी" },
+    avgRating: { en: "Avg Rating", hi: "औसत रेटिंग", mr: "सरासरी रेटिंग" },
+    childrenCovered: { en: "Children Covered", hi: "शामिल बच्चे", mr: "समाविष्ट मुले" },
+    reportsSubmitted: { en: "Reports", hi: "रिपोर्ट", mr: "अहवाल" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
+
+  // Generate detailed monthly history for selected worker
+  const workerMonthlyHistory = useMemo(() => {
+    if (!selectedWorker) return [];
+    const months = lang === "hi"
+      ? ["जन", "फर", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अग", "सित", "अक्टू", "नवं", "दिसं"]
+      : lang === "mr"
+      ? ["जाने", "फेब्रु", "मार्च", "एप्रि", "मे", "जून", "जुलै", "ऑग", "सप्टें", "ऑक्टो", "नोव्हें", "डिसें"]
+      : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    const base = selectedWorker.score;
+    // Seed from name for consistent data
+    const seed = selectedWorker.name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+    
+    return months.map((m, i) => {
+      const variance = Math.sin(seed + i * 1.3) * 8;
+      const att = Math.min(100, Math.max(50, Math.round(selectedWorker.attendance + variance - (11 - i) * 0.8)));
+      const vis = Math.max(10, Math.round(selectedWorker.visits / 12 * (0.7 + Math.sin(seed + i) * 0.3) * 12));
+      const vac = Math.min(100, Math.max(40, Math.round(selectedWorker.vaccineRate + variance * 0.7 - (11 - i) * 0.6)));
+      const sc = Math.min(100, Math.max(40, Math.round(base + variance - (11 - i) * 0.7)));
+      return { month: m, attendance: att, visits: vis, vaccineRate: vac, score: sc, children: Math.round(15 + Math.sin(seed + i) * 5), reports: Math.round(3 + Math.sin(seed + i * 2) * 2) };
+    });
+  }, [selectedWorker, lang]);
+
+  const workerRadarData = useMemo(() => {
+    if (!selectedWorker) return [];
+    return [
+      { skill: tl("attendanceRate"), value: selectedWorker.attendance },
+      { skill: tl("homeVisits"), value: Math.min(100, Math.round(selectedWorker.visits * 2.2)) },
+      { skill: t("vaccines"), value: selectedWorker.vaccineRate },
+      { skill: tl("reportsSubmitted"), value: Math.min(100, Math.round(selectedWorker.score * 0.95 + 5)) },
+      { skill: tl("childrenCovered"), value: Math.min(100, Math.round(selectedWorker.score * 1.02)) },
+    ];
+  }, [selectedWorker]);
 
   const sections = [
     { key: "overview" as const, labelKey: "summary" as TranslationKey },
@@ -544,7 +592,8 @@ const SupervisorDashboard = () => {
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + ai * 0.05 + wi * 0.03 }}
-                    className="stat-card"
+                    className="stat-card cursor-pointer active:scale-[0.98] transition-transform"
+                    onClick={() => setSelectedWorker({ ...w, area: area.area })}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
@@ -581,6 +630,7 @@ const SupervisorDashboard = () => {
                         <p className="text-[9px] text-muted-foreground">{t("vaccines")}</p>
                       </div>
                     </div>
+                    <p className="text-[9px] text-primary mt-2 text-center font-medium">{tl("viewProfile")} →</p>
                   </motion.div>
                 ))}
               </div>
@@ -830,6 +880,112 @@ const SupervisorDashboard = () => {
           </div>
         );
       })()}
+
+      {/* ─── WORKER PROFILE DIALOG ──────────────────────────── */}
+      <Dialog open={!!selectedWorker} onOpenChange={(open) => !open && setSelectedWorker(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          {selectedWorker && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    selectedWorker.score >= 85 ? "bg-health-normal-bg" : selectedWorker.score >= 70 ? "bg-health-risk-bg" : "bg-health-severe-bg"
+                  }`}>
+                    <UserCheck className={`w-5 h-5 ${
+                      selectedWorker.score >= 85 ? "text-health-normal" : selectedWorker.score >= 70 ? "text-health-risk" : "text-health-severe"
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="text-base font-bold">{selectedWorker.name}</p>
+                    <p className="text-xs text-muted-foreground font-normal flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> {selectedWorker.area}
+                    </p>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+
+              {/* Summary Stats */}
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {[
+                  { label: tl("attendanceRate"), value: `${selectedWorker.attendance}%`, icon: UserCheck },
+                  { label: tl("homeVisits"), value: selectedWorker.visits, icon: Home },
+                  { label: t("vaccines"), value: `${selectedWorker.vaccineRate}%`, icon: Syringe },
+                  { label: tl("overallScore"), value: `${selectedWorker.score}%`, icon: Award },
+                ].map((s, i) => (
+                  <div key={i} className="text-center p-2 rounded-xl bg-secondary">
+                    <s.icon className="w-3.5 h-3.5 mx-auto mb-1 text-primary" />
+                    <p className="text-sm font-bold">{s.value}</p>
+                    <p className="text-[8px] text-muted-foreground leading-tight">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Radar Chart - Skills */}
+              <div className="mt-4">
+                <h4 className="text-xs font-bold mb-2 flex items-center gap-1.5">
+                  <Star className="w-3.5 h-3.5 text-accent" /> {tl("skillRadar")}
+                </h4>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={workerRadarData} outerRadius="70%">
+                      <PolarGrid strokeDasharray="3 3" className="opacity-30" />
+                      <PolarAngleAxis dataKey="skill" tick={{ fontSize: 9 }} />
+                      <PolarRadiusAxis tick={{ fontSize: 8 }} domain={[0, 100]} />
+                      <Radar dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} strokeWidth={2} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Performance Trend - Area Chart */}
+              <div className="mt-4">
+                <h4 className="text-xs font-bold mb-2 flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-primary" /> {tl("performanceTrend")}
+                </h4>
+                <div className="h-44">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={workerMonthlyHistory}>
+                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                      <XAxis dataKey="month" tick={{ fontSize: 9 }} />
+                      <YAxis tick={{ fontSize: 9 }} domain={[40, 100]} />
+                      <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12 }} />
+                      <Area type="monotone" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} name={tl("overallScore")} />
+                      <Area type="monotone" dataKey="attendance" stroke="hsl(var(--accent))" fill="hsl(var(--accent))" fillOpacity={0.1} strokeWidth={1.5} name={tl("attendanceRate")} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Monthly Breakdown Table */}
+              <div className="mt-4">
+                <h4 className="text-xs font-bold mb-2 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground" /> {tl("monthlyBreakdown")}
+                </h4>
+                <div className="rounded-xl border overflow-hidden">
+                  <div className="grid grid-cols-5 gap-0 text-[9px] font-semibold text-muted-foreground bg-secondary p-2">
+                    <span>{lang === "hi" ? "माह" : lang === "mr" ? "महिना" : "Month"}</span>
+                    <span className="text-center">{tl("attendanceRate")}</span>
+                    <span className="text-center">{tl("homeVisits")}</span>
+                    <span className="text-center">{t("vaccines")}</span>
+                    <span className="text-center">{tl("overallScore")}</span>
+                  </div>
+                  {workerMonthlyHistory.map((m, i) => (
+                    <div key={i} className={`grid grid-cols-5 gap-0 text-[10px] p-2 ${i % 2 === 0 ? "" : "bg-secondary/50"}`}>
+                      <span className="font-medium">{m.month}</span>
+                      <span className="text-center">{m.attendance}%</span>
+                      <span className="text-center">{m.visits}</span>
+                      <span className="text-center">{m.vaccineRate}%</span>
+                      <span className={`text-center font-bold ${
+                        m.score >= 85 ? "text-health-normal" : m.score >= 70 ? "text-health-risk" : "text-health-severe"
+                      }`}>{m.score}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
