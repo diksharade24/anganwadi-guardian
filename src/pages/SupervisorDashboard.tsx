@@ -865,6 +865,57 @@ const SupervisorDashboard = () => {
               )}
             </motion.div>
           </div>
+
+          {/* Flagged Workers Section */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="stat-card border-l-4 border-l-health-risk">
+            <h4 className="text-xs font-bold flex items-center gap-1.5 mb-3">
+              <Flag className="w-3.5 h-3.5 text-health-risk" /> {tl("flaggedWorkers")}
+            </h4>
+            {Object.keys(flaggedWorkers).length === 0 ? (
+              <p className="text-[10px] text-muted-foreground">{tl("noFlagged")}</p>
+            ) : (
+              Object.entries(flaggedWorkers).map(([name, data]) => {
+                const worker = rankedWorkers.find(w => w.name === name);
+                return (
+                  <div key={name} className="p-2.5 rounded-xl bg-secondary mb-2 last:mb-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[11px] font-semibold flex items-center gap-1.5">
+                        <Flag className="w-3 h-3 text-health-severe fill-health-severe" />
+                        {name}
+                        {worker && <span className={`text-[9px] font-bold ml-1 ${worker.score >= 85 ? "text-health-normal" : worker.score >= 70 ? "text-health-risk" : "text-health-severe"}`}>{worker.score}%</span>}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => { setReminderTarget(name); setReminderMessage(""); }}
+                          className="px-2 py-1 rounded-lg bg-primary/10 text-primary text-[9px] font-semibold flex items-center gap-1 hover:bg-primary/20 transition-colors"
+                        >
+                          <Send className="w-2.5 h-2.5" /> {tl("sendReminder")}
+                        </button>
+                        <button
+                          onClick={() => toggleFlag(name)}
+                          className="px-2 py-1 rounded-lg bg-health-severe-bg text-health-severe text-[9px] font-semibold hover:bg-health-severe/20 transition-colors"
+                        >
+                          {tl("unflagWorker")}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground">📌 {data.reason} · {data.date}</p>
+                    {data.reminders.length > 0 && (
+                      <div className="mt-1.5 space-y-1">
+                        <p className="text-[8px] font-semibold text-muted-foreground">{tl("reminderHistory")}:</p>
+                        {data.reminders.map((r, ri) => (
+                          <div key={ri} className="flex items-start gap-1.5 text-[9px] text-muted-foreground">
+                            <MessageSquare className="w-2.5 h-2.5 mt-0.5 text-primary flex-shrink-0" />
+                            <span>{r.message} <span className="opacity-60">({r.date})</span></span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </motion.div>
         </div>
       )}
 
