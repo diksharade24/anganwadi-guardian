@@ -301,9 +301,30 @@ const SupervisorDashboard = () => {
     ];
   }, [selectedWorker]);
 
+  // Ranked workers across all areas
+  const rankedWorkers = useMemo(() => {
+    const all = workersByArea.flatMap(a => a.workers.map(w => ({ ...w, area: a.area })));
+    const sorted = [...all].sort((a, b) => {
+      const aVal = a[rankingSortBy];
+      const bVal = b[rankingSortBy];
+      return rankingSortDir === "desc" ? (bVal as number) - (aVal as number) : (aVal as number) - (bVal as number);
+    });
+    return sorted;
+  }, [workersByArea, rankingSortBy, rankingSortDir]);
+
+  const toggleRankingSort = useCallback((col: "score" | "attendance" | "visits" | "vaccineRate") => {
+    if (rankingSortBy === col) {
+      setRankingSortDir(d => d === "desc" ? "asc" : "desc");
+    } else {
+      setRankingSortBy(col);
+      setRankingSortDir("desc");
+    }
+  }, [rankingSortBy]);
+
   const sections = [
     { key: "overview" as const, labelKey: "summary" as TranslationKey },
     { key: "workers" as const, label: tl("workerTrends") },
+    { key: "rankings" as const, label: tl("rankings") },
     { key: "stock" as const, labelKey: "stock" as TranslationKey },
     { key: "vaccine" as const, labelKey: "vaccines" as TranslationKey },
     { key: "development" as const, labelKey: "development" as TranslationKey },
