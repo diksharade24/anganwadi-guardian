@@ -263,6 +263,13 @@ const SupervisorDashboard = () => {
     avgRating: { en: "Avg Rating", hi: "औसत रेटिंग", mr: "सरासरी रेटिंग" },
     childrenCovered: { en: "Children Covered", hi: "शामिल बच्चे", mr: "समाविष्ट मुले" },
     reportsSubmitted: { en: "Reports", hi: "रिपोर्ट", mr: "अहवाल" },
+    rankings: { en: "Rankings", hi: "रैंकिंग", mr: "क्रमवारी" },
+    rank: { en: "Rank", hi: "रैंक", mr: "क्रमांक" },
+    workerName: { en: "Worker", hi: "कार्यकर्ता", mr: "कर्मचारी" },
+    area: { en: "Area", hi: "क्षेत्र", mr: "क्षेत्र" },
+    sortBy: { en: "Sort by", hi: "इसके अनुसार क्रमबद्ध", mr: "यानुसार क्रमवारी" },
+    allWorkerRankings: { en: "All Worker Rankings", hi: "सभी कार्यकर्ता रैंकिंग", mr: "सर्व कर्मचारी क्रमवारी" },
+    clickToSort: { en: "Click column to sort", hi: "क्रमबद्ध करने के लिए कॉलम पर क्लिक करें", mr: "क्रमवारीसाठी स्तंभावर क्लिक करा" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
