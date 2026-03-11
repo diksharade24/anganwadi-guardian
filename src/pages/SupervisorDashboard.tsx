@@ -693,10 +693,29 @@ const SupervisorDashboard = () => {
                         }`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold">{w.name}</p>
+                        <p className="text-sm font-semibold flex items-center gap-1.5">
+                          {w.name}
+                          {flaggedWorkers[w.name] && <Flag className="w-3 h-3 text-health-severe fill-health-severe" />}
+                        </p>
                         <p className="text-[10px] text-muted-foreground">{tl("overallScore")}: {w.score}%</p>
                       </div>
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleFlag(w.name); }}
+                          className={`p-1.5 rounded-lg transition-colors ${flaggedWorkers[w.name] ? "bg-health-severe-bg" : "bg-secondary hover:bg-health-severe-bg"}`}
+                          title={flaggedWorkers[w.name] ? tl("unflagWorker") : tl("flagWorker")}
+                        >
+                          <Flag className={`w-3 h-3 ${flaggedWorkers[w.name] ? "text-health-severe fill-health-severe" : "text-muted-foreground"}`} />
+                        </button>
+                        {flaggedWorkers[w.name] && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setReminderTarget(w.name); setReminderMessage(""); }}
+                            className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+                            title={tl("sendReminder")}
+                          >
+                            <Send className="w-3 h-3 text-primary" />
+                          </button>
+                        )}
                         {w.trend === "up" && <TrendingUp className="w-3.5 h-3.5 text-health-normal" />}
                         {w.trend === "down" && <TrendingUp className="w-3.5 h-3.5 text-health-severe rotate-180" />}
                         {w.trend === "stable" && <Activity className="w-3.5 h-3.5 text-muted-foreground" />}
