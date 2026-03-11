@@ -789,6 +789,7 @@ const SupervisorDashboard = () => {
         </div>
       )}
 
+      {activeSection === "stock" && (
         <div className="space-y-3">
           {stock.map((item, i) => {
             const status = getStockStatus(item.current, item.minimum);
