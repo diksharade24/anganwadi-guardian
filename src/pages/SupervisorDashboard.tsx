@@ -370,6 +370,25 @@ const SupervisorDashboard = () => {
   const areaNames = useMemo(() => workersByArea.map(a => a.area), [workersByArea]);
   const visibleAreaNames = useMemo(() => filteredAreas.map(a => a.area), [filteredAreas]);
 
+  // Ranked workers across all areas
+  const rankedWorkers = useMemo(() => {
+    const all = workersByArea.flatMap(a => a.workers.map(w => ({ ...w, area: a.area })));
+    return [...all].sort((a, b) => {
+      const aVal = a[rankingSortBy] as number;
+      const bVal = b[rankingSortBy] as number;
+      return rankingSortDir === "desc" ? bVal - aVal : aVal - bVal;
+    });
+  }, [workersByArea, rankingSortBy, rankingSortDir]);
+
+  const toggleRankingSort = useCallback((col: "score" | "attendance" | "visits" | "vaccineRate") => {
+    if (rankingSortBy === col) {
+      setRankingSortDir(d => d === "desc" ? "asc" : "desc");
+    } else {
+      setRankingSortBy(col);
+      setRankingSortDir("desc");
+    }
+  }, [rankingSortBy]);
+
   return (
     <div className="page-container">
       {/* Header */}
