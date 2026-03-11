@@ -318,6 +318,18 @@ const SupervisorDashboard = () => {
     sortBy: { en: "Sort by", hi: "इसके अनुसार क्रमबद्ध", mr: "यानुसार क्रमवारी" },
     allWorkerRankings: { en: "All Worker Rankings", hi: "सभी कार्यकर्ता रैंकिंग", mr: "सर्व कर्मचारी क्रमवारी" },
     clickToSort: { en: "Click column to sort", hi: "क्रमबद्ध करने के लिए कॉलम पर क्लिक करें", mr: "क्रमवारीसाठी स्तंभावर क्लिक करा" },
+    flagWorker: { en: "Flag Worker", hi: "कार्यकर्ता को चिह्नित करें", mr: "कर्मचारी चिन्हांकित करा" },
+    unflagWorker: { en: "Unflag", hi: "चिह्न हटाएं", mr: "चिन्ह काढा" },
+    flagged: { en: "Flagged", hi: "चिह्नित", mr: "चिन्हांकित" },
+    flagReason: { en: "Reason for flagging", hi: "चिह्नित करने का कारण", mr: "चिन्हांकित करण्याचे कारण" },
+    sendReminder: { en: "Send Reminder", hi: "अनुस्मारक भेजें", mr: "स्मरणपत्र पाठवा" },
+    reminderSent: { en: "Reminder Sent", hi: "अनुस्मारक भेजा गया", mr: "स्मरणपत्र पाठवले" },
+    reminderMessage: { en: "Improvement reminder message", hi: "सुधार अनुस्मारक संदेश", mr: "सुधारणा स्मरणपत्र संदेश" },
+    flaggedWorkers: { en: "Flagged Workers", hi: "चिह्नित कार्यकर्ता", mr: "चिन्हांकित कर्मचारी" },
+    noFlagged: { en: "No workers flagged", hi: "कोई कार्यकर्ता चिह्नित नहीं", mr: "कोणताही कर्मचारी चिन्हांकित नाही" },
+    reminderHistory: { en: "Reminders Sent", hi: "भेजे गए अनुस्मारक", mr: "पाठवलेली स्मरणपत्रे" },
+    confirm: { en: "Confirm", hi: "पुष्टि करें", mr: "पुष्टी करा" },
+    cancel: { en: "Cancel", hi: "रद्द करें", mr: "रद्द करा" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
