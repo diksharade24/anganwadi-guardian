@@ -25,6 +25,9 @@ import {
   X,
   Home,
   Award,
+  Flag,
+  Send,
+  MessageSquare,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area } from "recharts";
@@ -143,6 +146,51 @@ const SupervisorDashboard = () => {
   const [rankingSortBy, setRankingSortBy] = useState<"score" | "attendance" | "visits" | "vaccineRate">("score");
   const [rankingSortDir, setRankingSortDir] = useState<"desc" | "asc">("desc");
   const [selectedWorker, setSelectedWorker] = useState<{ name: string; area: string; attendance: number; visits: number; vaccineRate: number; score: number; trend: string } | null>(null);
+
+  // Flagged workers state (persisted)
+  const [flaggedWorkers, setFlaggedWorkers] = useState<Record<string, { reason: string; date: string; reminders: { message: string; date: string }[] }>>(() => {
+    const saved = localStorage.getItem("flagged-workers");
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [reminderTarget, setReminderTarget] = useState<string | null>(null);
+  const [reminderMessage, setReminderMessage] = useState("");
+  const [flagReason, setFlagReason] = useState("");
+  const [showFlagDialog, setShowFlagDialog] = useState<string | null>(null);
+
+  const saveFlaggedWorkers = (updated: typeof flaggedWorkers) => {
+    setFlaggedWorkers(updated);
+    localStorage.setItem("flagged-workers", JSON.stringify(updated));
+  };
+
+  const toggleFlag = (workerName: string) => {
+    if (flaggedWorkers[workerName]) {
+      const updated = { ...flaggedWorkers };
+      delete updated[workerName];
+      saveFlaggedWorkers(updated);
+    } else {
+      setShowFlagDialog(workerName);
+      setFlagReason("");
+    }
+  };
+
+  const confirmFlag = () => {
+    if (!showFlagDialog) return;
+    const updated = { ...flaggedWorkers, [showFlagDialog]: { reason: flagReason || "Underperforming", date: new Date().toISOString().split("T")[0], reminders: [] } };
+    saveFlaggedWorkers(updated);
+    setShowFlagDialog(null);
+    setFlagReason("");
+  };
+
+  const sendReminder = () => {
+    if (!reminderTarget || !reminderMessage.trim()) return;
+    const updated = { ...flaggedWorkers };
+    if (updated[reminderTarget]) {
+      updated[reminderTarget].reminders.push({ message: reminderMessage, date: new Date().toISOString().split("T")[0] });
+      saveFlaggedWorkers(updated);
+    }
+    setReminderTarget(null);
+    setReminderMessage("");
+  };
 
   // Stock data from localStorage or defaults
   const stock: StockItem[] = useMemo(() => {
@@ -270,6 +318,18 @@ const SupervisorDashboard = () => {
     sortBy: { en: "Sort by", hi: "इसके अनुसार क्रमबद्ध", mr: "यानुसार क्रमवारी" },
     allWorkerRankings: { en: "All Worker Rankings", hi: "सभी कार्यकर्ता रैंकिंग", mr: "सर्व कर्मचारी क्रमवारी" },
     clickToSort: { en: "Click column to sort", hi: "क्रमबद्ध करने के लिए कॉलम पर क्लिक करें", mr: "क्रमवारीसाठी स्तंभावर क्लिक करा" },
+    flagWorker: { en: "Flag Worker", hi: "कार्यकर्ता को चिह्नित करें", mr: "कर्मचारी चिन्हांकित करा" },
+    unflagWorker: { en: "Unflag", hi: "चिह्न हटाएं", mr: "चिन्ह काढा" },
+    flagged: { en: "Flagged", hi: "चिह्नित", mr: "चिन्हांकित" },
+    flagReason: { en: "Reason for flagging", hi: "चिह्नित करने का कारण", mr: "चिन्हांकित करण्याचे कारण" },
+    sendReminder: { en: "Send Reminder", hi: "अनुस्मारक भेजें", mr: "स्मरणपत्र पाठवा" },
+    reminderSent: { en: "Reminder Sent", hi: "अनुस्मारक भेजा गया", mr: "स्मरणपत्र पाठवले" },
+    reminderMessage: { en: "Improvement reminder message", hi: "सुधार अनुस्मारक संदेश", mr: "सुधारणा स्मरणपत्र संदेश" },
+    flaggedWorkers: { en: "Flagged Workers", hi: "चिह्नित कार्यकर्ता", mr: "चिन्हांकित कर्मचारी" },
+    noFlagged: { en: "No workers flagged", hi: "कोई कार्यकर्ता चिह्नित नहीं", mr: "कोणताही कर्मचारी चिन्हांकित नाही" },
+    reminderHistory: { en: "Reminders Sent", hi: "भेजे गए अनुस्मारक", mr: "पाठवलेली स्मरणपत्रे" },
+    confirm: { en: "Confirm", hi: "पुष्टि करें", mr: "पुष्टी करा" },
+    cancel: { en: "Cancel", hi: "रद्द करें", mr: "रद्द करा" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
@@ -633,10 +693,29 @@ const SupervisorDashboard = () => {
                         }`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold">{w.name}</p>
+                        <p className="text-sm font-semibold flex items-center gap-1.5">
+                          {w.name}
+                          {flaggedWorkers[w.name] && <Flag className="w-3 h-3 text-health-severe fill-health-severe" />}
+                        </p>
                         <p className="text-[10px] text-muted-foreground">{tl("overallScore")}: {w.score}%</p>
                       </div>
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleFlag(w.name); }}
+                          className={`p-1.5 rounded-lg transition-colors ${flaggedWorkers[w.name] ? "bg-health-severe-bg" : "bg-secondary hover:bg-health-severe-bg"}`}
+                          title={flaggedWorkers[w.name] ? tl("unflagWorker") : tl("flagWorker")}
+                        >
+                          <Flag className={`w-3 h-3 ${flaggedWorkers[w.name] ? "text-health-severe fill-health-severe" : "text-muted-foreground"}`} />
+                        </button>
+                        {flaggedWorkers[w.name] && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setReminderTarget(w.name); setReminderMessage(""); }}
+                            className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+                            title={tl("sendReminder")}
+                          >
+                            <Send className="w-3 h-3 text-primary" />
+                          </button>
+                        )}
                         {w.trend === "up" && <TrendingUp className="w-3.5 h-3.5 text-health-normal" />}
                         {w.trend === "down" && <TrendingUp className="w-3.5 h-3.5 text-health-severe rotate-180" />}
                         {w.trend === "stable" && <Activity className="w-3.5 h-3.5 text-muted-foreground" />}
@@ -786,6 +865,57 @@ const SupervisorDashboard = () => {
               )}
             </motion.div>
           </div>
+
+          {/* Flagged Workers Section */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="stat-card border-l-4 border-l-health-risk">
+            <h4 className="text-xs font-bold flex items-center gap-1.5 mb-3">
+              <Flag className="w-3.5 h-3.5 text-health-risk" /> {tl("flaggedWorkers")}
+            </h4>
+            {Object.keys(flaggedWorkers).length === 0 ? (
+              <p className="text-[10px] text-muted-foreground">{tl("noFlagged")}</p>
+            ) : (
+              Object.entries(flaggedWorkers).map(([name, data]) => {
+                const worker = rankedWorkers.find(w => w.name === name);
+                return (
+                  <div key={name} className="p-2.5 rounded-xl bg-secondary mb-2 last:mb-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[11px] font-semibold flex items-center gap-1.5">
+                        <Flag className="w-3 h-3 text-health-severe fill-health-severe" />
+                        {name}
+                        {worker && <span className={`text-[9px] font-bold ml-1 ${worker.score >= 85 ? "text-health-normal" : worker.score >= 70 ? "text-health-risk" : "text-health-severe"}`}>{worker.score}%</span>}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => { setReminderTarget(name); setReminderMessage(""); }}
+                          className="px-2 py-1 rounded-lg bg-primary/10 text-primary text-[9px] font-semibold flex items-center gap-1 hover:bg-primary/20 transition-colors"
+                        >
+                          <Send className="w-2.5 h-2.5" /> {tl("sendReminder")}
+                        </button>
+                        <button
+                          onClick={() => toggleFlag(name)}
+                          className="px-2 py-1 rounded-lg bg-health-severe-bg text-health-severe text-[9px] font-semibold hover:bg-health-severe/20 transition-colors"
+                        >
+                          {tl("unflagWorker")}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground">📌 {data.reason} · {data.date}</p>
+                    {data.reminders.length > 0 && (
+                      <div className="mt-1.5 space-y-1">
+                        <p className="text-[8px] font-semibold text-muted-foreground">{tl("reminderHistory")}:</p>
+                        {data.reminders.map((r, ri) => (
+                          <div key={ri} className="flex items-start gap-1.5 text-[9px] text-muted-foreground">
+                            <MessageSquare className="w-2.5 h-2.5 mt-0.5 text-primary flex-shrink-0" />
+                            <span>{r.message} <span className="opacity-60">({r.date})</span></span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </motion.div>
         </div>
       )}
 
@@ -1054,6 +1184,50 @@ const SupervisorDashboard = () => {
                 </DialogTitle>
               </DialogHeader>
 
+              {/* Flag & Reminder Actions */}
+              <div className="flex gap-2 mt-1">
+                <button
+                  onClick={() => toggleFlag(selectedWorker.name)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                    flaggedWorkers[selectedWorker.name]
+                      ? "bg-health-severe-bg text-health-severe border border-health-severe/20"
+                      : "bg-secondary text-muted-foreground hover:bg-health-severe-bg hover:text-health-severe"
+                  }`}
+                >
+                  <Flag className={`w-3.5 h-3.5 ${flaggedWorkers[selectedWorker.name] ? "fill-health-severe" : ""}`} />
+                  {flaggedWorkers[selectedWorker.name] ? tl("unflagWorker") : tl("flagWorker")}
+                </button>
+                {flaggedWorkers[selectedWorker.name] && (
+                  <button
+                    onClick={() => { setReminderTarget(selectedWorker.name); setReminderMessage(""); }}
+                    className="flex-1 py-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-primary/20 transition-colors"
+                  >
+                    <Send className="w-3.5 h-3.5" /> {tl("sendReminder")}
+                  </button>
+                )}
+              </div>
+
+              {/* Flag info if flagged */}
+              {flaggedWorkers[selectedWorker.name] && (
+                <div className="p-2.5 rounded-xl bg-health-severe-bg/50 border border-health-severe/10">
+                  <p className="text-[10px] font-semibold text-health-severe flex items-center gap-1">
+                    <Flag className="w-3 h-3 fill-health-severe" /> {tl("flagged")}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground mt-0.5">📌 {flaggedWorkers[selectedWorker.name].reason} · {flaggedWorkers[selectedWorker.name].date}</p>
+                  {flaggedWorkers[selectedWorker.name].reminders.length > 0 && (
+                    <div className="mt-1.5 space-y-0.5">
+                      <p className="text-[8px] font-semibold text-muted-foreground">{tl("reminderHistory")}:</p>
+                      {flaggedWorkers[selectedWorker.name].reminders.map((r, ri) => (
+                        <p key={ri} className="text-[9px] text-muted-foreground flex items-start gap-1">
+                          <MessageSquare className="w-2.5 h-2.5 mt-0.5 text-primary flex-shrink-0" />
+                          {r.message} <span className="opacity-60">({r.date})</span>
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Summary Stats */}
               <div className="grid grid-cols-4 gap-2 mt-2">
                 {[
@@ -1134,6 +1308,95 @@ const SupervisorDashboard = () => {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── FLAG REASON DIALOG ──────────────────────────────── */}
+      <Dialog open={!!showFlagDialog} onOpenChange={(open) => !open && setShowFlagDialog(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Flag className="w-4 h-4 text-health-severe" /> {tl("flagWorker")}: {showFlagDialog}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div>
+              <label className="text-[10px] font-semibold text-muted-foreground mb-1 block">{tl("flagReason")}</label>
+              <textarea
+                value={flagReason}
+                onChange={(e) => setFlagReason(e.target.value)}
+                placeholder={lang === "hi" ? "कारण दर्ज करें..." : lang === "mr" ? "कारण प्रविष्ट करा..." : "Enter reason..."}
+                className="w-full p-2.5 rounded-xl border bg-secondary text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowFlagDialog(null)}
+                className="flex-1 py-2.5 rounded-xl bg-secondary text-muted-foreground text-xs font-semibold"
+              >
+                {tl("cancel")}
+              </button>
+              <button
+                onClick={confirmFlag}
+                className="flex-1 py-2.5 rounded-xl bg-health-severe text-white text-xs font-semibold flex items-center justify-center gap-1.5"
+              >
+                <Flag className="w-3.5 h-3.5" /> {tl("confirm")}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── SEND REMINDER DIALOG ───────────────────────────── */}
+      <Dialog open={!!reminderTarget} onOpenChange={(open) => !open && setReminderTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Send className="w-4 h-4 text-primary" /> {tl("sendReminder")}: {reminderTarget}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div>
+              <label className="text-[10px] font-semibold text-muted-foreground mb-1 block">{tl("reminderMessage")}</label>
+              <textarea
+                value={reminderMessage}
+                onChange={(e) => setReminderMessage(e.target.value)}
+                placeholder={lang === "hi" ? "सुधार संदेश लिखें..." : lang === "mr" ? "सुधारणा संदेश लिहा..." : "Write improvement message..."}
+                className="w-full p-2.5 rounded-xl border bg-secondary text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            {/* Quick templates */}
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                lang === "hi" ? "उपस्थिति में सुधार करें" : lang === "mr" ? "उपस्थिती सुधारा" : "Improve attendance rate",
+                lang === "hi" ? "अधिक घर विजिट करें" : lang === "mr" ? "अधिक घरभेटी करा" : "Complete more home visits",
+                lang === "hi" ? "टीकाकरण कवरेज बढ़ाएं" : lang === "mr" ? "लसीकरण कव्हरेज वाढवा" : "Increase vaccine coverage",
+              ].map((tmpl) => (
+                <button
+                  key={tmpl}
+                  onClick={() => setReminderMessage(tmpl)}
+                  className="px-2.5 py-1 rounded-full bg-secondary text-[9px] font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                >
+                  {tmpl}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setReminderTarget(null)}
+                className="flex-1 py-2.5 rounded-xl bg-secondary text-muted-foreground text-xs font-semibold"
+              >
+                {tl("cancel")}
+              </button>
+              <button
+                onClick={sendReminder}
+                disabled={!reminderMessage.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <Send className="w-3.5 h-3.5" /> {tl("sendReminder")}
+              </button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
