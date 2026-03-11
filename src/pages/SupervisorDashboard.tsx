@@ -137,9 +137,11 @@ const getVaccineStatus = (vaccine: Vaccine, dob: string, completed: string[]) =>
 const SupervisorDashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
-  const [activeSection, setActiveSection] = useState<"overview" | "workers" | "stock" | "vaccine" | "development" | "visits">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "workers" | "rankings" | "stock" | "vaccine" | "development" | "visits">("overview");
   const [workerAreaFilter, setWorkerAreaFilter] = useState<string>("all");
   const [workerTimeFilter, setWorkerTimeFilter] = useState<"3m" | "6m" | "12m">("6m");
+  const [rankingSortBy, setRankingSortBy] = useState<"score" | "attendance" | "visits" | "vaccineRate">("score");
+  const [rankingSortDir, setRankingSortDir] = useState<"desc" | "asc">("desc");
   const [selectedWorker, setSelectedWorker] = useState<{ name: string; area: string; attendance: number; visits: number; vaccineRate: number; score: number; trend: string } | null>(null);
 
   // Stock data from localStorage or defaults
@@ -261,6 +263,13 @@ const SupervisorDashboard = () => {
     avgRating: { en: "Avg Rating", hi: "औसत रेटिंग", mr: "सरासरी रेटिंग" },
     childrenCovered: { en: "Children Covered", hi: "शामिल बच्चे", mr: "समाविष्ट मुले" },
     reportsSubmitted: { en: "Reports", hi: "रिपोर्ट", mr: "अहवाल" },
+    rankings: { en: "Rankings", hi: "रैंकिंग", mr: "क्रमवारी" },
+    rank: { en: "Rank", hi: "रैंक", mr: "क्रमांक" },
+    workerName: { en: "Worker", hi: "कार्यकर्ता", mr: "कर्मचारी" },
+    area: { en: "Area", hi: "क्षेत्र", mr: "क्षेत्र" },
+    sortBy: { en: "Sort by", hi: "इसके अनुसार क्रमबद्ध", mr: "यानुसार क्रमवारी" },
+    allWorkerRankings: { en: "All Worker Rankings", hi: "सभी कार्यकर्ता रैंकिंग", mr: "सर्व कर्मचारी क्रमवारी" },
+    clickToSort: { en: "Click column to sort", hi: "क्रमबद्ध करने के लिए कॉलम पर क्लिक करें", mr: "क्रमवारीसाठी स्तंभावर क्लिक करा" },
   };
 
   const tl = (key: string) => sectionLabels[key]?.[lang] || sectionLabels[key]?.en || key;
@@ -302,6 +311,7 @@ const SupervisorDashboard = () => {
   const sections = [
     { key: "overview" as const, labelKey: "summary" as TranslationKey },
     { key: "workers" as const, label: tl("workerTrends") },
+    { key: "rankings" as const, label: tl("rankings") },
     { key: "stock" as const, labelKey: "stock" as TranslationKey },
     { key: "vaccine" as const, labelKey: "vaccines" as TranslationKey },
     { key: "development" as const, labelKey: "development" as TranslationKey },
@@ -359,6 +369,25 @@ const SupervisorDashboard = () => {
 
   const areaNames = useMemo(() => workersByArea.map(a => a.area), [workersByArea]);
   const visibleAreaNames = useMemo(() => filteredAreas.map(a => a.area), [filteredAreas]);
+
+  // Ranked workers across all areas
+  const rankedWorkers = useMemo(() => {
+    const all = workersByArea.flatMap(a => a.workers.map(w => ({ ...w, area: a.area })));
+    return [...all].sort((a, b) => {
+      const aVal = a[rankingSortBy] as number;
+      const bVal = b[rankingSortBy] as number;
+      return rankingSortDir === "desc" ? bVal - aVal : aVal - bVal;
+    });
+  }, [workersByArea, rankingSortBy, rankingSortDir]);
+
+  const toggleRankingSort = useCallback((col: "score" | "attendance" | "visits" | "vaccineRate") => {
+    if (rankingSortBy === col) {
+      setRankingSortDir(d => d === "desc" ? "asc" : "desc");
+    } else {
+      setRankingSortBy(col);
+      setRankingSortDir("desc");
+    }
+  }, [rankingSortBy]);
 
   return (
     <div className="page-container">
@@ -636,6 +665,127 @@ const SupervisorDashboard = () => {
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {/* ─── RANKINGS ─────────────────────────────────────── */}
+      {activeSection === "rankings" && (
+        <div className="space-y-5">
+          {/* Header */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
+            <h3 className="text-sm font-bold flex items-center gap-2 mb-1">
+              <Award className="w-4 h-4 text-primary" /> {tl("allWorkerRankings")}
+            </h3>
+            <p className="text-[10px] text-muted-foreground">{tl("clickToSort")}</p>
+          </motion.div>
+
+          {/* Score distribution bar chart */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="stat-card">
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-accent" /> {tl("overallScore")}
+            </h3>
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={rankedWorkers} layout="vertical" barSize={16}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" horizontal={false} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={90} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12 }} formatter={(val: number) => [`${val}%`, tl("overallScore")]} />
+                  <Bar dataKey="score" radius={[0, 6, 6, 0]} fill="hsl(var(--primary))">
+                    {rankedWorkers.map((w, i) => (
+                      <rect key={i} fill={w.score >= 85 ? "hsl(var(--health-normal))" : w.score >= 70 ? "hsl(var(--health-risk))" : "hsl(var(--health-severe))"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
+          {/* Ranking table */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="stat-card overflow-hidden">
+            <div className="rounded-xl border overflow-hidden">
+              {/* Table header */}
+              <div className="grid grid-cols-7 gap-0 text-[9px] font-bold text-muted-foreground bg-secondary p-2.5">
+                <span>{tl("rank")}</span>
+                <span className="col-span-2">{tl("workerName")}</span>
+                <button onClick={() => toggleRankingSort("score")} className={`text-center flex items-center justify-center gap-0.5 ${rankingSortBy === "score" ? "text-primary" : ""}`}>
+                  {tl("overallScore")} {rankingSortBy === "score" ? (rankingSortDir === "desc" ? "↓" : "↑") : ""}
+                </button>
+                <button onClick={() => toggleRankingSort("attendance")} className={`text-center flex items-center justify-center gap-0.5 ${rankingSortBy === "attendance" ? "text-primary" : ""}`}>
+                  {lang === "en" ? "Att." : tl("attendanceRate")} {rankingSortBy === "attendance" ? (rankingSortDir === "desc" ? "↓" : "↑") : ""}
+                </button>
+                <button onClick={() => toggleRankingSort("visits")} className={`text-center flex items-center justify-center gap-0.5 ${rankingSortBy === "visits" ? "text-primary" : ""}`}>
+                  {lang === "en" ? "Visits" : tl("visitsCompleted")} {rankingSortBy === "visits" ? (rankingSortDir === "desc" ? "↓" : "↑") : ""}
+                </button>
+                <button onClick={() => toggleRankingSort("vaccineRate")} className={`text-center flex items-center justify-center gap-0.5 ${rankingSortBy === "vaccineRate" ? "text-primary" : ""}`}>
+                  {lang === "en" ? "Vac." : t("vaccines")} {rankingSortBy === "vaccineRate" ? (rankingSortDir === "desc" ? "↓" : "↑") : ""}
+                </button>
+              </div>
+              {/* Table rows */}
+              {rankedWorkers.map((w, i) => (
+                <motion.div
+                  key={w.name}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.12 + i * 0.03 }}
+                  className={`grid grid-cols-7 gap-0 text-[11px] p-2.5 items-center cursor-pointer active:scale-[0.98] transition-all ${i % 2 === 0 ? "" : "bg-secondary/50"} hover:bg-primary/5`}
+                  onClick={() => setSelectedWorker({ ...w, area: w.area })}
+                >
+                  {/* Rank with medal for top 3 */}
+                  <span className="font-bold flex items-center gap-1">
+                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
+                  </span>
+                  {/* Name + area */}
+                  <div className="col-span-2 min-w-0">
+                    <p className="font-semibold truncate">{w.name}</p>
+                    <p className="text-[9px] text-muted-foreground flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" /> {w.area}</p>
+                  </div>
+                  {/* Score */}
+                  <span className={`text-center font-bold ${
+                    w.score >= 85 ? "text-health-normal" : w.score >= 70 ? "text-health-risk" : "text-health-severe"
+                  }`}>{w.score}%</span>
+                  {/* Attendance */}
+                  <span className="text-center">{w.attendance}%</span>
+                  {/* Visits */}
+                  <span className="text-center">{w.visits}</span>
+                  {/* Vaccine */}
+                  <span className="text-center">{w.vaccineRate}%</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Top / Bottom summary cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="stat-card border-l-4 border-l-health-normal">
+              <h4 className="text-xs font-bold flex items-center gap-1.5 mb-2">
+                <Star className="w-3.5 h-3.5 text-health-normal" /> {tl("topPerformers")}
+              </h4>
+              {rankedWorkers.filter(w => w.score >= 85).map(w => (
+                <div key={w.name} className="flex items-center justify-between mb-1">
+                  <p className="text-[10px] font-medium truncate flex-1">{w.name}</p>
+                  <span className="text-[10px] font-bold text-health-normal ml-1">{w.score}%</span>
+                </div>
+              ))}
+              {rankedWorkers.filter(w => w.score >= 85).length === 0 && (
+                <p className="text-[10px] text-muted-foreground">—</p>
+              )}
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="stat-card border-l-4 border-l-health-severe">
+              <h4 className="text-xs font-bold flex items-center gap-1.5 mb-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-health-severe" /> {tl("needsImprovement")}
+              </h4>
+              {rankedWorkers.filter(w => w.score < 70).map(w => (
+                <div key={w.name} className="flex items-center justify-between mb-1">
+                  <p className="text-[10px] font-medium truncate flex-1">{w.name}</p>
+                  <span className="text-[10px] font-bold text-health-severe ml-1">{w.score}%</span>
+                </div>
+              ))}
+              {rankedWorkers.filter(w => w.score < 70).length === 0 && (
+                <p className="text-[10px] text-muted-foreground">—</p>
+              )}
+            </motion.div>
+          </div>
         </div>
       )}
 
