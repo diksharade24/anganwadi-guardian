@@ -1184,6 +1184,50 @@ const SupervisorDashboard = () => {
                 </DialogTitle>
               </DialogHeader>
 
+              {/* Flag & Reminder Actions */}
+              <div className="flex gap-2 mt-1">
+                <button
+                  onClick={() => toggleFlag(selectedWorker.name)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                    flaggedWorkers[selectedWorker.name]
+                      ? "bg-health-severe-bg text-health-severe border border-health-severe/20"
+                      : "bg-secondary text-muted-foreground hover:bg-health-severe-bg hover:text-health-severe"
+                  }`}
+                >
+                  <Flag className={`w-3.5 h-3.5 ${flaggedWorkers[selectedWorker.name] ? "fill-health-severe" : ""}`} />
+                  {flaggedWorkers[selectedWorker.name] ? tl("unflagWorker") : tl("flagWorker")}
+                </button>
+                {flaggedWorkers[selectedWorker.name] && (
+                  <button
+                    onClick={() => { setReminderTarget(selectedWorker.name); setReminderMessage(""); }}
+                    className="flex-1 py-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-primary/20 transition-colors"
+                  >
+                    <Send className="w-3.5 h-3.5" /> {tl("sendReminder")}
+                  </button>
+                )}
+              </div>
+
+              {/* Flag info if flagged */}
+              {flaggedWorkers[selectedWorker.name] && (
+                <div className="p-2.5 rounded-xl bg-health-severe-bg/50 border border-health-severe/10">
+                  <p className="text-[10px] font-semibold text-health-severe flex items-center gap-1">
+                    <Flag className="w-3 h-3 fill-health-severe" /> {tl("flagged")}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground mt-0.5">📌 {flaggedWorkers[selectedWorker.name].reason} · {flaggedWorkers[selectedWorker.name].date}</p>
+                  {flaggedWorkers[selectedWorker.name].reminders.length > 0 && (
+                    <div className="mt-1.5 space-y-0.5">
+                      <p className="text-[8px] font-semibold text-muted-foreground">{tl("reminderHistory")}:</p>
+                      {flaggedWorkers[selectedWorker.name].reminders.map((r, ri) => (
+                        <p key={ri} className="text-[9px] text-muted-foreground flex items-start gap-1">
+                          <MessageSquare className="w-2.5 h-2.5 mt-0.5 text-primary flex-shrink-0" />
+                          {r.message} <span className="opacity-60">({r.date})</span>
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Summary Stats */}
               <div className="grid grid-cols-4 gap-2 mt-2">
                 {[
@@ -1264,6 +1308,95 @@ const SupervisorDashboard = () => {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── FLAG REASON DIALOG ──────────────────────────────── */}
+      <Dialog open={!!showFlagDialog} onOpenChange={(open) => !open && setShowFlagDialog(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Flag className="w-4 h-4 text-health-severe" /> {tl("flagWorker")}: {showFlagDialog}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div>
+              <label className="text-[10px] font-semibold text-muted-foreground mb-1 block">{tl("flagReason")}</label>
+              <textarea
+                value={flagReason}
+                onChange={(e) => setFlagReason(e.target.value)}
+                placeholder={lang === "hi" ? "कारण दर्ज करें..." : lang === "mr" ? "कारण प्रविष्ट करा..." : "Enter reason..."}
+                className="w-full p-2.5 rounded-xl border bg-secondary text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowFlagDialog(null)}
+                className="flex-1 py-2.5 rounded-xl bg-secondary text-muted-foreground text-xs font-semibold"
+              >
+                {tl("cancel")}
+              </button>
+              <button
+                onClick={confirmFlag}
+                className="flex-1 py-2.5 rounded-xl bg-health-severe text-white text-xs font-semibold flex items-center justify-center gap-1.5"
+              >
+                <Flag className="w-3.5 h-3.5" /> {tl("confirm")}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── SEND REMINDER DIALOG ───────────────────────────── */}
+      <Dialog open={!!reminderTarget} onOpenChange={(open) => !open && setReminderTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Send className="w-4 h-4 text-primary" /> {tl("sendReminder")}: {reminderTarget}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div>
+              <label className="text-[10px] font-semibold text-muted-foreground mb-1 block">{tl("reminderMessage")}</label>
+              <textarea
+                value={reminderMessage}
+                onChange={(e) => setReminderMessage(e.target.value)}
+                placeholder={lang === "hi" ? "सुधार संदेश लिखें..." : lang === "mr" ? "सुधारणा संदेश लिहा..." : "Write improvement message..."}
+                className="w-full p-2.5 rounded-xl border bg-secondary text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            {/* Quick templates */}
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                lang === "hi" ? "उपस्थिति में सुधार करें" : lang === "mr" ? "उपस्थिती सुधारा" : "Improve attendance rate",
+                lang === "hi" ? "अधिक घर विजिट करें" : lang === "mr" ? "अधिक घरभेटी करा" : "Complete more home visits",
+                lang === "hi" ? "टीकाकरण कवरेज बढ़ाएं" : lang === "mr" ? "लसीकरण कव्हरेज वाढवा" : "Increase vaccine coverage",
+              ].map((tmpl) => (
+                <button
+                  key={tmpl}
+                  onClick={() => setReminderMessage(tmpl)}
+                  className="px-2.5 py-1 rounded-full bg-secondary text-[9px] font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                >
+                  {tmpl}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setReminderTarget(null)}
+                className="flex-1 py-2.5 rounded-xl bg-secondary text-muted-foreground text-xs font-semibold"
+              >
+                {tl("cancel")}
+              </button>
+              <button
+                onClick={sendReminder}
+                disabled={!reminderMessage.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <Send className="w-3.5 h-3.5" /> {tl("sendReminder")}
+              </button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
