@@ -137,9 +137,11 @@ const getVaccineStatus = (vaccine: Vaccine, dob: string, completed: string[]) =>
 const SupervisorDashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
-  const [activeSection, setActiveSection] = useState<"overview" | "workers" | "stock" | "vaccine" | "development" | "visits">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "workers" | "rankings" | "stock" | "vaccine" | "development" | "visits">("overview");
   const [workerAreaFilter, setWorkerAreaFilter] = useState<string>("all");
   const [workerTimeFilter, setWorkerTimeFilter] = useState<"3m" | "6m" | "12m">("6m");
+  const [rankingSortBy, setRankingSortBy] = useState<"score" | "attendance" | "visits" | "vaccineRate">("score");
+  const [rankingSortDir, setRankingSortDir] = useState<"desc" | "asc">("desc");
   const [selectedWorker, setSelectedWorker] = useState<{ name: string; area: string; attendance: number; visits: number; vaccineRate: number; score: number; trend: string } | null>(null);
 
   // Stock data from localStorage or defaults
