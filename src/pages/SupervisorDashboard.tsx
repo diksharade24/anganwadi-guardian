@@ -147,6 +147,51 @@ const SupervisorDashboard = () => {
   const [rankingSortDir, setRankingSortDir] = useState<"desc" | "asc">("desc");
   const [selectedWorker, setSelectedWorker] = useState<{ name: string; area: string; attendance: number; visits: number; vaccineRate: number; score: number; trend: string } | null>(null);
 
+  // Flagged workers state (persisted)
+  const [flaggedWorkers, setFlaggedWorkers] = useState<Record<string, { reason: string; date: string; reminders: { message: string; date: string }[] }>>(() => {
+    const saved = localStorage.getItem("flagged-workers");
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [reminderTarget, setReminderTarget] = useState<string | null>(null);
+  const [reminderMessage, setReminderMessage] = useState("");
+  const [flagReason, setFlagReason] = useState("");
+  const [showFlagDialog, setShowFlagDialog] = useState<string | null>(null);
+
+  const saveFlaggedWorkers = (updated: typeof flaggedWorkers) => {
+    setFlaggedWorkers(updated);
+    localStorage.setItem("flagged-workers", JSON.stringify(updated));
+  };
+
+  const toggleFlag = (workerName: string) => {
+    if (flaggedWorkers[workerName]) {
+      const updated = { ...flaggedWorkers };
+      delete updated[workerName];
+      saveFlaggedWorkers(updated);
+    } else {
+      setShowFlagDialog(workerName);
+      setFlagReason("");
+    }
+  };
+
+  const confirmFlag = () => {
+    if (!showFlagDialog) return;
+    const updated = { ...flaggedWorkers, [showFlagDialog]: { reason: flagReason || "Underperforming", date: new Date().toISOString().split("T")[0], reminders: [] } };
+    saveFlaggedWorkers(updated);
+    setShowFlagDialog(null);
+    setFlagReason("");
+  };
+
+  const sendReminder = () => {
+    if (!reminderTarget || !reminderMessage.trim()) return;
+    const updated = { ...flaggedWorkers };
+    if (updated[reminderTarget]) {
+      updated[reminderTarget].reminders.push({ message: reminderMessage, date: new Date().toISOString().split("T")[0] });
+      saveFlaggedWorkers(updated);
+    }
+    setReminderTarget(null);
+    setReminderMessage("");
+  };
+
   // Stock data from localStorage or defaults
   const stock: StockItem[] = useMemo(() => {
     const saved = localStorage.getItem("nutrition-stock");
